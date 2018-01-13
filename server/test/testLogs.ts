@@ -29,3 +29,16 @@ export const emailSession = {
         '{"gid":"JQqNWF7pIMFEUyGFwRJaIQ","name":"OCS","time":"2017-09-26T01:23:25.472Z","pid":3672,"level":30,"tid":4008,"taskid":123,"taskBegin":true,"taskName":"Request","parent":{"name":"ECS","pid":3240,"taskid":299},"reqAccepted":true,"req":{"method":"POST","port":19012,"path":"/OCS/convert"}}\r\n' +
         '{"gid":"JQqNWF7pIMFEUyGFwRJaIQ","name":"OCS","time":"2017-09-26T01:23:25.473Z","pid":3672,"level":30,"tid":4008,"taskid":123,"taskInput":{"data":{"src":"C:/ProgramData/Accusoft/Prizm/Temp/ECS/rich-text-body-with-2-attachments.msg.214/body.rtf","pageNumber":0,"ignorePageNumber":true,"header":{"lines":[["From:",""],["Subject:","Rich Text Body with 2 Attachments"],["To:","to"],["Cc:","cc"],["Sent:","November 30, 2015 10:10 PM"],["Attached:","accusoft-5p.pdf, 002.jpg"]],"fontSize":"11pt","fontFamily":"Arial","color":"#000000"},"fitInlineImages":true,"outputTemplate":"C:/buildAgent/work/12358f0f1fa7a5bd/target/convertedFiles/rich-text-body-with-2-attachments.msg.pdf"}}}'    
 };
+
+export const problemSession = {
+    errorLog:
+        '{"name":"ContentConversionService","hostname":"IlyaPC","pid":17044,"taskid":6334,"gid":"dUUxxsrVYqCtAORZ37JHIQ","level":30,"type":"ContentConversionService","cutoffDateTime":"2018-01-12T05:52:55.500Z","msg":"Begin: cleanTempDirectory","time":"2018-01-12T05:52:55.500Z","v":0}\r\n' +
+        '{"name":"ContentConversionService","hostname":"IlyaPC","pid":17044,"taskid":6334,"gid":"dUUxxsrVYqCtAORZ37JHIQ","level":50,"type":"ContentConversionService","err":{"message":"ENOENT, readdir \'C:\Prizm\cache\ContentConversionCache\\temp\'","name":"Error","stack":"Error: ENOENT, readdir \'C:\Prizm\cache\ContentConversionCache\\temp\'","code":"ENOENT"},"msg":"Failed to read root temp directory","time":"2018-01-12T05:52:55.501Z","v":0}',
+    warningLog: '{"gid":"","name":"MSOCS","time":"2017-12-20T20:48:49.403Z","pid":10624,"level":40,"tid":10684,"taskid":24,"getServiceLocation":"licensing-service","serviceAbsent":true}',
+    parsingErrorLog: 
+        '{"name":"document-conversion-service","hostname":"IlyaPC","pid":10704,"taskid":9,"gid":"DtfnG9ooBvigH/LoCANWag","level":30,"eventName":"delete","expirationTime":{},"activeContexts":0,"expiredContexts":0,"msg":"","time":"2018-01-12T05:58:34.059Z","v":0}\r\n' +
+        '{ foo: bar ',
+    emptyStringLog: 
+        '{"name":"document-conversion-service","hostname":"IlyaPC","pid":10704,"taskid":9,"gid":"DtfnG9ooBvigH/LoCANWag","level":30,"eventName":"delete","expirationTime":{},"activeContexts":0,"expiredContexts":0,"msg":"","time":"2018-01-12T05:58:34.059Z","v":0}\r\n' +
+        ''
+};

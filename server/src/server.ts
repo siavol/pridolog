@@ -2,7 +2,7 @@
 
 import {
 	IPCMessageReader, IPCMessageWriter, createConnection, IConnection, TextDocuments,
-	Diagnostic, DiagnosticSeverity, InitializeResult, TextDocumentPositionParams, CompletionItem, 
+	InitializeResult, TextDocumentPositionParams, CompletionItem, 
 	CompletionItemKind,
 	ReferenceParams,
 	Location,
@@ -11,6 +11,7 @@ import {
 import { getTextLines } from './textLog'
 import { DocumentsProvider } from './documentsProvider'
 import { CodeNavigator } from './codeNavigator'
+import { findLogProblems } from './diagnostics'
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -82,52 +83,7 @@ connection.onDidChangeConfiguration((change) => {
 });
 
 function validateTextDocument(documentText: string, documentUri: string): void {
-	let diagnostics: Diagnostic[] = [];
-	let lines = getTextLines(documentText);
-	let problems = 0;
-	for (var i = 0; i < lines.length && problems < maxNumberOfProblems; i++) {
-		let line = lines[i];
-		try {
-			const logEntry = JSON.parse(line);
-			if (logEntry.level >= 50) {
-				problems++;
-				diagnostics.push({
-					severity: DiagnosticSeverity.Error,
-					range: {
-						start: { line: i, character: 0 },
-						end: { line: i, character: line.length-1 }
-					},
-					message: `Error in microservice`,
-					source: 'ex'
-				});
-			}
-		} catch (parceErr) {
-			problems++;
-			diagnostics.push({
-				severity: DiagnosticSeverity.Warning,
-				range: {
-					start: { line: i, character: 0 },
-					end: { line: i, character: line.length }
-				},
-				message: `Can not parse: ${parceErr}`,
-				source: 'ex'
-			});
-		}
-		// let index = line.indexOf('typescript');
-		// if (index >= 0) {
-		// 	problems++;
-		// 	diagnostics.push({
-		// 		severity: DiagnosticSeverity.Warning,
-		// 		range: {
-		// 			start: { line: i, character: index },
-		// 			end: { line: i, character: index + 10 }
-		// 		},
-		// 		message: `${line.substr(index, 10)} should be spelled TypeScript`,
-		// 		source: 'ex'
-		// 	});
-		// }
-	}
-	// Send the computed diagnostics to VSCode.
+	const diagnostics = findLogProblems(documentText);
 	connection.sendDiagnostics({ uri: documentUri, diagnostics });
 }
 

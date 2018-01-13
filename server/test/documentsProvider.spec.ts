@@ -26,8 +26,8 @@ describe('DocumentsProvider', () => {
         it('should return log files', () => {
             const files = documentsProvider.getDocuments();
             expect(files).to.eql([
-                'file:///D:/mycode/pridolog/server/path/to/workspace/ContentConversionService.log',
-                'file:///D:/mycode/pridolog/server/path/to/workspace/PDFConversionService.log'
+                'file:///D:/mycode/pridolog/path/to/workspace/ContentConversionService.log',
+                'file:///D:/mycode/pridolog/path/to/workspace/PDFConversionService.log'
             ])
         });
     });
