@@ -1,0 +1,35 @@
+{
+	"name": "pridolog",
+	"description": "Implementation of a PrizmDoc log language server.",
+	"version": "0.0.1",
+	"author": "Ilya Shestakov",
+	"license": "MIT",
+	"engines": {
+		"node": "*"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Microsoft/vscode-extension-samples"
+	},
+	"dependencies": {
+		"file-uri-to-path": "^1.0.0",
+		"file-url": "^2.0.2",
+		"lodash": "^4.17.4",
+		"vscode-languageserver": "^3.4.2"
+	},
+	"scripts": {
+		"installServer": "installServerIntoExtension ../client ./package.json ./tsconfig.json",
+		"compile": "installServerIntoExtension ../client ./package.json ./tsconfig.json && tsc -p .",
+		"watch": "installServerIntoExtension ../client ./package.json ./tsconfig.json && tsc -w -p ."
+	},
+	"devDependencies": {
+		"@types/chai": "^4.0.10",
+		"@types/file-url": "^2.0.0",
+		"@types/lodash": "^4.14.91",
+		"@types/mock-fs": "^3.6.30",
+		"@types/sinon": "^4.1.2",
+		"chai": "^4.1.2",
+		"mocha": "^4.1.0",
+		"mock-fs": "^4.4.2"
+	}
+}
