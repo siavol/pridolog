@@ -61,26 +61,26 @@ documents.onDidOpen(e => {
 });
 
 // The settings interface describe the server relevant settings part
-interface Settings {
-	lspSample: ExampleSettings;
-}
+// interface Settings {
+// 	lspSample: ExampleSettings;
+// }
 
 // These are the example settings we defined in the client's package.json
 // file
-interface ExampleSettings {
-	maxNumberOfProblems: number;
-}
+// interface ExampleSettings {
+// 	maxNumberOfProblems: number;
+// }
 
 // hold the maxNumberOfProblems setting
-let maxNumberOfProblems: number;
+// let maxNumberOfProblems: number;
 // The settings have changed. Is send on server activation
 // as well.
-connection.onDidChangeConfiguration((change) => {
-	let settings = <Settings>change.settings;
-	maxNumberOfProblems = settings.lspSample.maxNumberOfProblems || 100;
+// connection.onDidChangeConfiguration((change) => {
+	// let settings = <Settings>change.settings;
+	// maxNumberOfProblems = settings.lspSample.maxNumberOfProblems || 100;
 	// Revalidate any open text documents
 	// documents.all().forEach(validateTextDocument);
-});
+// });
 
 function validateTextDocument(documentText: string, documentUri: string): void {
 	const diagnostics = findLogProblems(documentText);
