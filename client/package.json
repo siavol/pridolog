@@ -21,18 +21,28 @@
 	],
 	"main": "./out/src/extension",
 	"contributes": {
-        "languages": [{
-            "id": "prizmdoc-log",
-            "aliases": ["PrizmDoc-logs", "log", "pdlog"],
-            "extensions": [".log"],
-            "firstLine": "{.*(\"name\":\".*\")?.*(\"gid\":\".*\")?.*}",
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "prizmdoc-log",
-            "scopeName": "text.log.prizmdoc",
-            "path": "./syntaxes/log.tmLanguage.json"
-        }],
+		"languages": [
+			{
+				"id": "prizmdoc-log",
+				"aliases": [
+					"PrizmDoc-logs",
+					"log",
+					"pdlog"
+				],
+				"extensions": [
+					".log"
+				],
+				"firstLine": "{.*(\"name\":\".*\")?.*(\"gid\":\".*\")?.*}",
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "prizmdoc-log",
+				"scopeName": "text.log.prizmdoc",
+				"path": "./syntaxes/log.tmLanguage.json"
+			}
+		],
 		"configuration": {
 			"type": "object",
 			"title": "Example configuration",
