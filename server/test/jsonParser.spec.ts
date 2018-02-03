@@ -38,5 +38,14 @@ describe('jsonParser', () => {
             const json = '{"foo": 1, "bar": "test"}';
             expect(getToken(json, 0)).to.be.null;
         });
+
+        it('should return token from inner level', () => {
+            const json = '{"foo":{"bar":1, "biz":"test"}}';
+            expect(getToken(json, 12)).eql({
+                field: 'bar',
+                path: 'foo.bar',
+                value: 1
+            });
+        })
     });
 });
