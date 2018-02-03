@@ -46,6 +46,29 @@ describe('jsonParser', () => {
                 path: 'foo.bar',
                 value: 1
             });
-        })
+        });
+
+        it('should return token for array', () => {
+            const json = '{"foo": ["one", "two"], "bar":[1, 2]';
+            expect(getToken(json, 18)).eql({
+                field: 'foo',
+                path: 'foo',
+                value: ["one", "two"]
+            });
+            expect(getToken(json, 26)).eql({
+                field: 'bar',
+                path: 'bar',
+                value: [1, 2]
+            });
+        });
+
+        it('should return path for the object in the array', () => {
+            const json = '{"foo": ["123", {"bar":"test"}]';
+            expect(getToken(json, 26)).eql({
+                field: 'bar',
+                path: 'foo[1].bar',
+                value: "test"
+            });
+        });
     });
 });

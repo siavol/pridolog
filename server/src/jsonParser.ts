@@ -31,6 +31,11 @@ interface ITokenIndex {
     token: IToken;
 }
 
+interface IValueIndex {    
+    lastIndex: number;
+    value: any;
+}
+
 export interface IJsonToken {
     field: string;
     path: string;
@@ -64,7 +69,7 @@ export function getToken(json: string, position: number): IJsonToken {
     return {
         field: field.token.value,
         path: fieldPath,
-        value: value
+        value: value.value
     };
 }
 
@@ -73,9 +78,25 @@ function isRange(pos: IRangePosition | ICharPosition): pos is IRangePosition {
 }
 
 function findField(tokens: IToken[], index: number): ITokenIndex {
-    const prev = getPrev(tokens, index,
-        t => t.type === TokenType.Punctuation && (t.raw === '{' || t.raw === ','));
-    return getNext(tokens, prev.index);
+    const initial = {index, token: tokens[index]};
+
+    if (initial.token.type === TokenType.String) {
+        // it can be field or value part
+        const punct = getNext(tokens, index, t => t.type === TokenType.Punctuation);
+        if (punct.token.type === TokenType.Punctuation
+            && punct.token.raw === ':') {
+            // initial token is field
+            return initial;
+        }
+    }
+
+    if (initial.token.type === TokenType.Punctuation && initial.token.raw === ':') {
+        return getPrev(tokens, initial.index, t => t.type === TokenType.String);
+    }
+
+    const prev = getPrev(tokens, initial.index,
+        t => t.type === TokenType.Punctuation && t.raw === ':');
+    return getPrev(tokens, prev.index);
 }
 
 function getValueForField(tokens: IToken[], fieldIndex: number): any {
@@ -85,7 +106,46 @@ function getValueForField(tokens: IToken[], fieldIndex: number): any {
     }
     
     const value = getNext(tokens, delimiterIndex);
-    return value.token.value;
+    return getTokenValue(tokens, value.index);
+}
+
+function getTokenValue(tokens: IToken[], index: number): IValueIndex {
+    const initial = tokens[index];
+    if (initial.type === TokenType.String || initial.type === TokenType.Number) {
+        return { lastIndex: index, value: initial.value };
+    }
+
+    if (initial.type === TokenType.Punctuation && initial.raw === '[') {
+        const firstItem = getNext(tokens, index);
+        const result = populateArray(tokens, firstItem.index, []);
+        return result;
+    }
+
+    throw new Error('Not implemented');
+}
+
+function populateArray(tokens: IToken[], itemIdex: number, array: any[]): IValueIndex {
+    const itemValue = getTokenValue(tokens, itemIdex);
+    array.push(itemValue.value);
+
+    const next = getNext(tokens, itemValue.lastIndex);
+    if (next.token.type !== TokenType.Punctuation) {
+        throw new Error(`Not expected token at ${next.index}`);
+    }
+
+    if (next.token.raw === ']') {
+        // array end
+        return {
+            lastIndex: next.index,
+            value: array
+        };
+    } else if (next.token.raw === ',') {
+        // there are more items
+        const nextItem = getNext(tokens, next.index);
+        return populateArray(tokens, nextItem.index, array);
+    } else {
+        throw new Error(`Not expected token at ${next.index}`);
+    }
 }
 
 function getFieldPath(tokens: IToken[], fieldIndex: number): string {
@@ -105,6 +165,15 @@ function getFieldPath(tokens: IToken[], fieldIndex: number): string {
 function getFieldParent(tokens: IToken[], fieldIndex: number): ITokenIndex {
     const objectStart = getPrev(tokens, fieldIndex,
         t => t.type === TokenType.Punctuation && t.raw === '{');
+    const arrayStart = getPrev(tokens, fieldIndex,
+        t => t.type === TokenType.Punctuation && t.raw === '[');
+    // if (arrayStart.index < objectStart.index) {
+    //     let itemIndexInArray = 0;
+    //     let tokenIndex = fieldIndex;
+    //     getPrev(tokens, tokenIndex,
+    //         t => t.type === TokenType.Punctuation && t.)
+    // }
+
     const delimiter = getPrev(tokens, objectStart.index,
         t => t.type === TokenType.Punctuation && t.raw === ':');
     if (delimiter.index > 0) {
