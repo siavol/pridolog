@@ -4,11 +4,15 @@
 	"author": "Ilya Shestakov",
 	"license": "MIT",
 	"version": "0.0.1",
-	"publisher": "vscode",
+	"publisher": "ishestakov",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-extension-samples"
 	},
+	"engines": {
+		"vscode": "^1.19.0"
+	},
+	"icon": "images/fox.png",
 	"scripts": {
 		"postinstall": "cd server && npm install && cd ../client && npm install && cd ..",
 		"compile": "tsc -p client/tsconfig.json && cd server && npm run installServer && cd .. && tsc -p server/tsconfig.json",
