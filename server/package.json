@@ -14,7 +14,7 @@
 	"dependencies": {
 		"file-uri-to-path": "^1.0.0",
 		"file-url": "^2.0.2",
-		"json-tokenize": "^0.3.0",
+		"json-to-ast": "^2.0.2",
 		"lodash": "^4.17.4",
 		"vscode-languageserver": "^3.4.2"
 	},

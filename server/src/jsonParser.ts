@@ -1,39 +1,50 @@
 import * as _ from 'lodash'
-import * as tokenize from 'json-tokenize'
+import * as getJsonAst from 'json-to-ast'
 
-enum TokenType {
-    Whitespace = 'whitespace',
-    Punctuation = 'punctuation',
-    String = 'string',
-    Number = 'number',
-    Literal = 'literal'
+interface IAstCoordinate {
+    line: number;
+    column: number; 
+    offset: number;
 }
 
-interface ICharPosition {
-    lineno: number;
-    column: number;
+interface IAstLocation {
+    start: IAstCoordinate;
+    end: IAstCoordinate;
 }
 
-interface IRangePosition {
-    start: ICharPosition;
-    end: ICharPosition;
+type AstItem = IAstObject | IAstProperty | IAstIdentifier | IAstArray | IAstLiteral;
+
+interface IAstObject {
+    readonly type: 'Object';
+    readonly children: IAstProperty[];
+    readonly loc?: IAstLocation;
 }
 
-interface IToken {
-    type: TokenType;
-    position: ICharPosition | IRangePosition;
-    raw: string,
-    value: any
+interface IAstProperty {
+    readonly type: 'Property';
+    readonly key: IAstIdentifier;
+    readonly value: IAstObject | IAstArray | IAstLiteral;
+    readonly loc?: IAstLocation;
 }
 
-interface ITokenIndex {
-    index: number;
-    token: IToken;
+interface IAstIdentifier {
+    readonly type: 'Identifier';
+    readonly value: string,
+    readonly raw: string;
+    readonly loc?: IAstLocation;
 }
 
-interface IValueIndex {    
-    lastIndex: number;
-    value: any;
+interface IAstArray {
+    readonly type: 'Array';
+    readonly children: (IAstObject | IAstArray | IAstLiteral)[],
+    readonly loc?: IAstLocation;
+}
+
+interface IAstLiteral {
+    readonly type: 'Literal',
+    readonly value: string | number | boolean | null,
+    readonly raw: string,
+    readonly loc?: IAstLocation;
 }
 
 export interface IJsonToken {
@@ -47,170 +58,88 @@ export function getToken(json: string, position: number): IJsonToken {
         return null;
     }
 
-    const tokens = _.filter(<IToken[]>tokenize(json), 
-        t => t.type !== TokenType.Whitespace);
-    const tokenIndex = _.findLastIndex(tokens, t => {
-        if (isRange(t.position)) {
-            return t.position.start.lineno === 1 && t.position.end.lineno === 1
-                && t.position.start.column <= position && t.position.end.column >= position;                
-        } else {
-            return t.position.column <= position;
-        }
-    });
+    const root = <IAstObject>getJsonAst(json);
+    const itemPath = getAstItemPathByPos(root, position);
 
-    if (tokenIndex < 0) {
+    if (itemPath.length === 1 && itemPath[0] === root) {
+        // no property on position
         return null;
     }
 
-    const field = findField(tokens, tokenIndex);
-    const value = getValueForField(tokens, field.index);
-    const fieldPath = getFieldPath(tokens, field.index);
+    const fieldItem = _.findLast(itemPath, isProperty);
+    const field = fieldItem.key.value;
+    const path = buildPathString(itemPath);
+    const value = getItemValue(fieldItem.value);
 
-    return {
-        field: field.token.value,
-        path: fieldPath,
-        value: value.value
-    };
+    return {field, path, value};
 }
 
-function isRange(pos: IRangePosition | ICharPosition): pos is IRangePosition {
-    return _.has(pos, 'start');
+function getAstItemPathByPos(item: IAstObject, position: number): AstItem[] {
+    return populatePathToItem(item, position, []);
 }
 
-function findField(tokens: IToken[], index: number): ITokenIndex {
-    const initial = {index, token: tokens[index]};
+function populatePathToItem(item: AstItem, position: number, path: AstItem[]): AstItem[] {
+    path.push(item);
+    if (isObject(item)) {
+        const nextItem = _.find(item.children, c => isItemOnPosition(c, position));
+        if (nextItem) {
+            return populatePathToItem(nextItem, position, path);
+        }
+    } else if (isArray(item)) {
+        const arrItem = _.find(item.children, c => isItemOnPosition(c, position));
+        if (arrItem) {
+            return populatePathToItem(arrItem, position, path);
+        }
+    } else if (isProperty(item) && isItemOnPosition(item.value, position)) {        
+        return populatePathToItem(item.value, position, path);
+    }
+    return path;
+}
 
-    if (initial.token.type === TokenType.String) {
-        // it can be field or value part
-        const punct = getNext(tokens, index, t => t.type === TokenType.Punctuation);
-        if (punct.token.type === TokenType.Punctuation
-            && punct.token.raw === ':') {
-            // initial token is field
-            return initial;
+function buildPathString(path: AstItem[]): string {
+    let result = '';    
+    for(let i=0; i<path.length; i++) {
+        const item = path[i];
+        if (isProperty(item)) {
+            result += (result ? '.' : '') + item.key.value;
+        } else if (isArray(item) && i+1 < path.length) {
+            const index = _.indexOf(item.children, path[i+1]);
+            result += `[${index}]`;
         }
     }
-
-    if (initial.token.type === TokenType.Punctuation && initial.token.raw === ':') {
-        return getPrev(tokens, initial.index, t => t.type === TokenType.String);
-    }
-
-    const prev = getPrev(tokens, initial.index,
-        t => t.type === TokenType.Punctuation && t.raw === ':');
-    return getPrev(tokens, prev.index);
+    return result;
 }
 
-function getValueForField(tokens: IToken[], fieldIndex: number): any {
-    const {index: delimiterIndex, token: delimiter} = getNext(tokens, fieldIndex)
-    if (delimiter.type != TokenType.Punctuation || delimiter.raw !== ':') {
-        throw new Error(`Not expected token in position ${delimiterIndex}`);
-    }
-    
-    const value = getNext(tokens, delimiterIndex);
-    return getTokenValue(tokens, value.index);
+function isItemOnPosition(item: AstItem, position: number): boolean {
+    return item.loc.start.column <= position && item.loc.end.column >= position
 }
 
-function getTokenValue(tokens: IToken[], index: number): IValueIndex {
-    const initial = tokens[index];
-    if (initial.type === TokenType.String || initial.type === TokenType.Number) {
-        return { lastIndex: index, value: initial.value };
-    }
-
-    if (initial.type === TokenType.Punctuation && initial.raw === '[') {
-        const firstItem = getNext(tokens, index);
-        const result = populateArray(tokens, firstItem.index, []);
-        return result;
-    }
-
-    throw new Error('Not implemented');
-}
-
-function populateArray(tokens: IToken[], itemIdex: number, array: any[]): IValueIndex {
-    const itemValue = getTokenValue(tokens, itemIdex);
-    array.push(itemValue.value);
-
-    const next = getNext(tokens, itemValue.lastIndex);
-    if (next.token.type !== TokenType.Punctuation) {
-        throw new Error(`Not expected token at ${next.index}`);
-    }
-
-    if (next.token.raw === ']') {
-        // array end
-        return {
-            lastIndex: next.index,
-            value: array
-        };
-    } else if (next.token.raw === ',') {
-        // there are more items
-        const nextItem = getNext(tokens, next.index);
-        return populateArray(tokens, nextItem.index, array);
+function getItemValue(item: IAstObject | IAstArray | IAstLiteral): any {
+    if (isLiteral(item)) {
+        return item.value;
+    } else if (isArray(item)){
+        return _.map(item.children, i => getItemValue(i));
     } else {
-        throw new Error(`Not expected token at ${next.index}`);
+        const obj: any = {};
+        item.children.forEach(p => {
+            obj[p.key.value] = getItemValue(p.value);
+        });
+        return obj;
     }
 }
 
-function getFieldPath(tokens: IToken[], fieldIndex: number): string {
-    const pathTokens: ITokenIndex[] = [];
-    let current = { index: fieldIndex, token: tokens[fieldIndex] };
-    do {
-        pathTokens.push(current);
-        current = getFieldParent(tokens, current.index);
-    } while(current);
-
-    return _(pathTokens)
-        .reverse()
-        .map(p => p.token.value)
-        .join('.');
+function isObject(item: AstItem): item is IAstObject {
+    return item.type === 'Object';
 }
 
-function getFieldParent(tokens: IToken[], fieldIndex: number): ITokenIndex {
-    const objectStart = getPrev(tokens, fieldIndex,
-        t => t.type === TokenType.Punctuation && t.raw === '{');
-    const arrayStart = getPrev(tokens, fieldIndex,
-        t => t.type === TokenType.Punctuation && t.raw === '[');
-    // if (arrayStart.index < objectStart.index) {
-    //     let itemIndexInArray = 0;
-    //     let tokenIndex = fieldIndex;
-    //     getPrev(tokens, tokenIndex,
-    //         t => t.type === TokenType.Punctuation && t.)
-    // }
-
-    const delimiter = getPrev(tokens, objectStart.index,
-        t => t.type === TokenType.Punctuation && t.raw === ':');
-    if (delimiter.index > 0) {
-        return getPrev(tokens, delimiter.index)
-    } else {
-        return null;
-    }
+function isProperty(item: AstItem): item is IAstProperty {
+    return item.type === 'Property';
 }
 
-function getNext(tokens: IToken[], index: number,
-    predicate?: (t: IToken, i: number) => boolean): ITokenIndex {
-
-    if (index === tokens.length-1) {
-        return {index, token: tokens[index] };
-    }
-
-    let result = index + 1;
-    if (predicate) {
-        while (result < tokens.length && !predicate(tokens[result], result)) {
-            result++;
-        }
-    }
-    return { index: result, token: tokens[result] };
+function isLiteral(item: AstItem): item is IAstLiteral {
+    return item.type === 'Literal';
 }
 
-function getPrev(tokens: IToken[], index: number,
-    predicate?: (t: IToken, i: number) => boolean): ITokenIndex {
-
-    if (index === 0) {
-        return { index: 0, token: tokens[0] };
-    }
-
-    let result = index-1;
-    if (predicate) {
-        while (result > 0 && !predicate(tokens[result], result)) {
-            result--;
-        }
-    }
-    return { index: result, token: tokens[result] };
+function isArray(item: AstItem): item is IAstArray {
+    return item.type === 'Array';
 }

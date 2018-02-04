@@ -49,10 +49,10 @@ describe('jsonParser', () => {
         });
 
         it('should return token for array', () => {
-            const json = '{"foo": ["one", "two"], "bar":[1, 2]';
+            const json = '{"foo": ["one", "two"], "bar":[1, 2]}';
             expect(getToken(json, 18)).eql({
                 field: 'foo',
-                path: 'foo',
+                path: 'foo[1]',
                 value: ["one", "two"]
             });
             expect(getToken(json, 26)).eql({
@@ -63,7 +63,7 @@ describe('jsonParser', () => {
         });
 
         it('should return path for the object in the array', () => {
-            const json = '{"foo": ["123", {"bar":"test"}]';
+            const json = '{"foo": ["123", {"bar":"test"}]}';
             expect(getToken(json, 26)).eql({
                 field: 'bar',
                 path: 'foo[1].bar',
