@@ -44,7 +44,8 @@ connection.onInitialize((params): InitializeResult => {
 			completionProvider: {
 				resolveProvider: true
 			},
-			referencesProvider: true
+			referencesProvider: true,
+			definitionProvider: true
 		}
 	}
 });
@@ -152,12 +153,21 @@ connection.onDidCloseTextDocument((params) => {
 	connection.console.log(`${params.textDocument.uri} closed.`);
 });
 
-connection.onReferences((params: ReferenceParams): Location[] => {
-	const documentText = documentsProvider.getDocumentText(params.textDocument.uri);
+function getLogItem(textPosition: TextDocumentPositionParams): any {
+	const documentText = documentsProvider.getDocumentText(textPosition.textDocument.uri);
 	const lines = getTextLines(documentText);
-	const logString = lines[params.position.line];
-	const logItem = JSON.parse(logString);
+	const logString = lines[textPosition.position.line];
+	return JSON.parse(logString);
+}
+
+connection.onReferences((params: ReferenceParams): Location[] => {
+	const logItem = getLogItem(params);
 	return codeNavigator.findAllEntriesForGid(logItem.gid);
+});
+
+connection.onDefinition((params: TextDocumentPositionParams): Location => {
+	const logItem = getLogItem(params);
+	return codeNavigator.getDefinition(logItem);
 });
 
 // Listen on the connection

@@ -16,4 +16,8 @@ export class CodeNavigator {
             .value();
         return result;
     }
+
+    public getDefinition(logItem: any): Location {
+        return null;
+    }
 }
