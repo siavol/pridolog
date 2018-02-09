@@ -1,5 +1,5 @@
 import * as _ from 'lodash'
-import { Location, Range } from 'vscode-languageserver'
+import { Location, Range, Position } from 'vscode-languageserver'
 import { DocumentsProvider } from './documentsProvider'
 import { parseTextLog } from './textLog'
 
@@ -17,7 +17,48 @@ export class CodeNavigator {
         return result;
     }
 
-    public getDefinition(logItem: any): Location {
-        return null;
+    public getDefinition(reqLogItem: any): Location {
+        if (!reqLogItem.reqBegin) {
+            return null;
+        }
+
+        const request = reqLogItem.req;
+        const serviceFile = this.getLogFileForRequest(request.method, request.path);
+        if (!serviceFile) {
+            return null;
+        }
+
+        const serviceLogUri = this.documentsProvider.getUriForRelativePath(serviceFile);
+        const text = this.documentsProvider.getDocumentText(serviceLogUri);
+
+        const reqTime = Date.parse(reqLogItem.time);
+        const logLines = parseTextLog(text);
+        const defLogItem = _(logLines)
+            .filter(logLine => logLine.logItem.gid === reqLogItem.gid)
+            .filter(logLine => logLine.logItem.reqAccepted)
+            .filter(logLine => Date.parse(logLine.logItem.time) >= reqTime)
+            .first();
+
+        if (defLogItem) {
+            return Location.create(serviceLogUri, Range.create(
+                Position.create(defLogItem.line, 0),
+                Position.create(defLogItem.line, defLogItem.source.length)
+            ));
+        } else {
+            return null;
+        }        
+    }
+
+    private getLogFileForRequest(method: string, path: string): string {
+        const servicePrefix = _(path)
+            .split('/')
+            .compact()
+            .first();
+        switch (servicePrefix) {
+            case 'OCS':
+                return 'OfficeConversionService.log';
+            default:
+                return null;
+        }
     }
 }
