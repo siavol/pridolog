@@ -94,5 +94,33 @@ describe('CodeNavigator', () => {
                 }
             });
         });
+
+        it('should return location when ccs calls pdfcs', () => {
+            const logItem = { 
+                "name": "ContentConversionService", 
+                "hostname": "tootz-document0", 
+                "pid": 5552, "taskid": 7506, 
+                "gid": "Gd7Ics5NcAygZfeZ4jszbA", 
+                "level": 30, "reqBegin": true, 
+                "req": { 
+                    "method": "POST", 
+                    "path": "/PDFCS/documentAttributes", 
+                    "port": 19004, 
+                    "data": { 
+                        "src": "C:\\Prizm\\cache\\ContentConversionCache\\temp\\workflow_DwyVShpxhPDayDB1gc6PrA\\WorkfileContents.docx.pdf", 
+                        "confidence": 100, 
+                        "password": <string>null 
+                    } 
+                }, 
+                "msg": "", "time": "2017-09-20T01:18:44.156Z", "v": 0 };
+            const definition = codeNavigator.getDefinition(logItem);
+            expect(definition).eql({
+                uri: 'PDFConversionService.log',
+                range: {
+                    start: { line: 1, character: 0 },
+                    end: { line: 1, character: 366 }
+                }
+            });
+        });
     });
 });

@@ -2,6 +2,7 @@ import * as _ from 'lodash'
 import { Location, Range, Position } from 'vscode-languageserver'
 import { DocumentsProvider } from './documentsProvider'
 import { parseTextLog } from './textLog'
+import { getServiceByApiPrefix } from './prizmServices'
 
 export class CodeNavigator {
     constructor(private readonly documentsProvider: DocumentsProvider) { }
@@ -54,11 +55,8 @@ export class CodeNavigator {
             .split('/')
             .compact()
             .first();
-        switch (servicePrefix) {
-            case 'OCS':
-                return 'OfficeConversionService.log';
-            default:
-                return null;
-        }
+
+        const serviceInfo = getServiceByApiPrefix(servicePrefix);
+        return serviceInfo ? serviceInfo.logFile : null;
     }
 }
