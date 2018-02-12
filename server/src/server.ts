@@ -166,6 +166,7 @@ connection.onReferences((params: ReferenceParams): Location[] => {
 });
 
 connection.onDefinition((params: TextDocumentPositionParams): Location => {
+	console.log(params);
 	const logItem = getLogItem(params);
 	return codeNavigator.getDefinition(logItem);
 });

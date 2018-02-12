@@ -66,7 +66,7 @@ describe('CodeNavigator', () => {
             expect(definition).is.null;
         });
 
-        it('should return location when ccs calls ocs', () => {
+        it('should return location when log entry describes outcoming request ccs -> ocs', () => {
             const logItem = { 
                 "name": "ContentConversionService", 
                 "hostname": "tootz-document0", 
@@ -95,7 +95,7 @@ describe('CodeNavigator', () => {
             });
         });
 
-        it('should return location when ccs calls pdfcs', () => {
+        it('should return location when log entry describes outcoming request ccs -> pdfcs', () => {
             const logItem = { 
                 "name": "ContentConversionService", 
                 "hostname": "tootz-document0", 
@@ -119,6 +119,28 @@ describe('CodeNavigator', () => {
                 range: {
                     start: { line: 1, character: 0 },
                     end: { line: 1, character: 366 }
+                }
+            });
+        });
+
+        it('should return location when log entry describes incoming request ccs -> ocs', () => {
+            const logItem = {
+                "gid": "Gd7Ics5NcAygZfeZ4jszbA",
+                "name": "OCS",
+                "time": "2017-09-20T01:18:44.026Z",
+                "pid": 980, "level": 30, "tid": 3396, "taskid": 9597,
+                "taskBegin": true,
+                "taskName": "Request",
+                "parent": { "name": "ContentConversionService", "pid": 5552, "taskid": 7506 },
+                "reqAccepted": true,
+                "req": { "method": "POST", "port": 19012, "path": "/OCS/convert" }
+            };
+            const definition = codeNavigator.getDefinition(logItem);
+            expect(definition).eql({
+                uri: 'ContentConversionService.log',
+                range: {
+                    start: { line: 1, character: 0 },
+                    end: { line: 1, character: 350 }
                 }
             });
         });
