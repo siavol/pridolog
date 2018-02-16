@@ -4,7 +4,7 @@
 	"author": "Ilya Shestakov",
 	"license": "MIT",
 	"version": "0.0.1",
-	"publisher": "vscode",
+	"publisher": "ishestakov",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-extension-samples"
@@ -12,6 +12,7 @@
 	"engines": {
 		"vscode": "^1.16.0"
 	},
+	"icon": "images/fox.png",
 	"categories": [
 		"Languages",
 		"Other"
