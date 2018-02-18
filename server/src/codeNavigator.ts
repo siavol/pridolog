@@ -2,7 +2,7 @@ import * as _ from 'lodash'
 import { Location, Range, Position } from 'vscode-languageserver'
 import { DocumentsProvider } from './documentsProvider'
 import { parseTextLog } from './textLog'
-import { services, getServiceByApiPrefix } from './prizmServices'
+import { services, getServiceByRequestPath } from './prizmServices'
 
 export class CodeNavigator {
     constructor(private readonly documentsProvider: DocumentsProvider) { }
@@ -78,12 +78,7 @@ export class CodeNavigator {
     }
 
     private getLogFileForRequest(/*method: string,*/ path: string): string {
-        const servicePrefix = _(path)
-            .split('/')
-            .compact()
-            .first();
-
-        const serviceInfo = getServiceByApiPrefix(servicePrefix);
+        const serviceInfo = getServiceByRequestPath(path);
         return serviceInfo ? serviceInfo.logFile : null;
     }
 }

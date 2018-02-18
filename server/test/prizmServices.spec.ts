@@ -1,22 +1,22 @@
 import { expect } from 'chai'
 
-import { getServiceByApiPrefix } from '../src/prizmServices'
+import { getServiceByRequestPath } from '../src/prizmServices'
 
 describe('prizmServices', () => {
 
     describe('getServiceByApiPrefix', () => {
 
-        it('should return service info with it has API prefix specified', () => {
-            const ocsService = getServiceByApiPrefix('OCS');
-            expect(ocsService).eql({
-                name: 'OCS',
-                logFile: 'OfficeConversionService.log',
-                apiPrefix: 'OCS'
-            });
-        });
+        [
+            { requestPath: '/OCS/convert', service: 'OCS' }
+        ].forEach(testCase => it(`should return ${testCase.service} service info for ${testCase.requestPath}`, () => {
+            const ocsService = getServiceByRequestPath(testCase.requestPath);
+            expect(ocsService).exist;
+            expect(ocsService.name).eql(testCase.service);
+        }));
+        
 
         it('should return null for not existing API prefix', () => {
-            expect(getServiceByApiPrefix('NONE')).is.undefined;
+            expect(getServiceByRequestPath('NONE')).is.undefined;
         });
     });
 })

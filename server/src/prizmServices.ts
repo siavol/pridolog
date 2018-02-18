@@ -3,14 +3,14 @@ import * as _ from 'lodash'
 export interface IPrizmDocService {
     name: string;
     logFile: string;
-    apiPrefix?: string;
+    requestPath?: RegExp;
 }
 
 const serviceDescriptions = {
     autoRedaction: {
         name: 'ARS',
         logFile: 'AutoRedactionService.log',
-        apiPrefix: 'ARS'
+        requestPath: /\/ECS\/.*/
     },
     configNormalizer: {
         name: 'config-normalizer',
@@ -19,7 +19,7 @@ const serviceDescriptions = {
     configurationService: {
         name: 'configuration-service',
         logFile: 'configuration-service.log',
-        apiPrefix: 'CONF'
+        requestPath: /\/CONF\/.*/
     },
     contentConversionService: {
         name: 'ContentConversionService',
@@ -28,7 +28,7 @@ const serviceDescriptions = {
     documentConversionService: {
         name: 'document-conversion-service',
         logFile: 'document-conversion-service.log',
-        apiPrefix: 'document-conversion-service'
+        requestPath: /\/document-conversion-service\/.*/
     },
     emailConversionService: {
         name: 'ECS',
@@ -45,7 +45,7 @@ const serviceDescriptions = {
     formatDetectionService: {
         name: 'FDS',
         logFile: 'FormatDetectionService.log',
-        apiPrefix: 'FDS'
+        requestPath: /\/FDS\/.*/
     },
     formExtractionService: {
         name: 'form-extraction-service',
@@ -62,7 +62,7 @@ const serviceDescriptions = {
     licensingService: {
         name: 'licensing-service',
         logFile: 'licensing-service.log',
-        apiPrefix: 'LIC'
+        requestPath: /\/LIC\/.*/
     },
     mongoManagerService: {
         name: 'mongo-manager-service',
@@ -75,7 +75,7 @@ const serviceDescriptions = {
     officeConversionService: {
         name: 'OCS',
         logFile: 'OfficeConversionService.log',
-        apiPrefix: 'OCS'
+        requestPath: /\/OCS\/.*/
     },
     pccErrors: {
         name: 'pcc-errors', // this service does not log its name
@@ -84,12 +84,12 @@ const serviceDescriptions = {
     pdfConversionService: {
         name: 'PDFCS',
         logFile: 'PDFConversionService.log',
-        apiPrefix: 'PDFCS'
+        requestPath: /\/PDFCS\/.*/
     },
     pdfProcessingService: {
         name: 'PDFPS',
         logFile: 'PDFProcessingService.log',
-        apiPrefix: 'PDFPS'
+        requestPath: /\/PDFPS\/.*/
     },
     processStateService: {
         name: 'process-state-service',
@@ -133,8 +133,8 @@ type IServiceDescriptions = {
 
 export const services = Object.freeze(serviceDescriptions);
 
-export function getServiceByApiPrefix(apiPrefix: string) {
+export function getServiceByRequestPath(path: string) {
     return _(<IServiceDescriptions>serviceDescriptions)
         .values()
-        .find(s => s.apiPrefix === apiPrefix);
+        .find(s => s.requestPath && s.requestPath.test(path));
 }
