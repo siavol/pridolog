@@ -10,7 +10,7 @@ const serviceDescriptions = {
     autoRedaction: {
         name: 'ARS',
         logFile: 'AutoRedactionService.log',
-        requestPath: /\/ECS\/.*/
+        requestPath: /\/ECS\/.*/i
     },
     configNormalizer: {
         name: 'config-normalizer',
@@ -19,37 +19,42 @@ const serviceDescriptions = {
     configurationService: {
         name: 'configuration-service',
         logFile: 'configuration-service.log',
-        requestPath: /\/CONF\/.*/
+        requestPath: /\/CONF\/.*/i
     },
     contentConversionService: {
         name: 'ContentConversionService',
-        logFile: 'ContentConversionService.log'
+        logFile: 'ContentConversionService.log',
+        requestPath: /\/v2\/((service\/health)|(contentConverters.*))/i
     },
     documentConversionService: {
         name: 'document-conversion-service',
         logFile: 'document-conversion-service.log',
-        requestPath: /\/document-conversion-service\/.*/
+        requestPath: /\/document-conversion-service\/.*/i
     },
     emailConversionService: {
         name: 'ECS',
-        logFile: 'EmailConversionService.log'
+        logFile: 'EmailConversionService.log',
+        requestPath: /\/ECS\/.*/i
     },
     emailProcessingService: {
         name: 'EPS',
-        logFile: 'EmailProcessingService.log'
+        logFile: 'EmailProcessingService.log',
+        requestPath: /\/EPS\/.*/i
     },
     errorReportingService: {
         name: 'ERS',
-        logFile: 'ErrorReportingService.log'
+        logFile: 'ErrorReportingService.log',
+        requestPath: /\/ERS\/.*/i
     },
     formatDetectionService: {
         name: 'FDS',
         logFile: 'FormatDetectionService.log',
-        requestPath: /\/FDS\/.*/
+        requestPath: /\/FDS\/.*/i
     },
     formExtractionService: {
         name: 'form-extraction-service',
-        logFile: 'form-extraction-service.log'
+        logFile: 'form-extraction-service.log',
+        requestPath: /\/v2\/formExtractors.*/
     },
     healthService: {
         name: 'health-service',
@@ -57,12 +62,13 @@ const serviceDescriptions = {
     },
     htmlConversionService: {
         name: 'HTMLCS',
-        logFile: 'HTMLConversionService.log'
+        logFile: 'HTMLConversionService.log',
+        requestPath: /\/HTMLCS\/.*/i
     },
     licensingService: {
         name: 'licensing-service',
         logFile: 'licensing-service.log',
-        requestPath: /\/LIC\/.*/
+        requestPath: /\/LIC\/.*/i
     },
     mongoManagerService: {
         name: 'mongo-manager-service',
@@ -75,7 +81,7 @@ const serviceDescriptions = {
     officeConversionService: {
         name: 'OCS',
         logFile: 'OfficeConversionService.log',
-        requestPath: /\/OCS\/.*/
+        requestPath: /\/OCS\/.*/i
     },
     pccErrors: {
         name: 'pcc-errors', // this service does not log its name
@@ -84,12 +90,12 @@ const serviceDescriptions = {
     pdfConversionService: {
         name: 'PDFCS',
         logFile: 'PDFConversionService.log',
-        requestPath: /\/PDFCS\/.*/
+        requestPath: /\/PDFCS\/.*/i
     },
     pdfProcessingService: {
         name: 'PDFPS',
         logFile: 'PDFProcessingService.log',
-        requestPath: /\/PDFPS\/.*/
+        requestPath: /\/PDFPS\/.*/i
     },
     processStateService: {
         name: 'process-state-service',
@@ -97,7 +103,8 @@ const serviceDescriptions = {
     },
     rasterConversionService: {
         name: 'RCS',
-        logFile: 'RasterConversionService.log'
+        logFile: 'RasterConversionService.log',
+        requestPath: /\/RCS\/.*/i
     },
     rasterFormExtractionService: {
         name: 'raster-form-extraction-service',
@@ -109,11 +116,13 @@ const serviceDescriptions = {
     },
     textService: {
         name: 'text-service',
-        logFile: 'text-service.log'
+        logFile: 'text-service.log',
+        requestPath: /\/v2\/searchContexts.*/i
     },
     vectorConversionService: {
         name: 'VCS',
-        logFile: 'VectorConversionService.log'
+        logFile: 'VectorConversionService.log',
+        requestPath: /\/VCS\/.*/i
     },
     watchdog: {
         name: 'WATCHDOG',
@@ -121,8 +130,10 @@ const serviceDescriptions = {
     },
     workfileService: {
         name: 'WorkfileService',
-        logFile: 'WorkfileService.log'
+        logFile: 'WorkfileService.log',
+        requestPath: /\/PCCIS\/v1\/((WorkFile.*)|(Private\/(makeContentsAvailable|getWorkFileInfo|makeWorkFileContentsAvailable|extendExpirationDateTime))|(Service\/Current\/(Info|Health)))/i
     }
+    // ToDO: PCCIS
 };
 
 type ServiceName = keyof typeof serviceDescriptions;
