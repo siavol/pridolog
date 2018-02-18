@@ -64,6 +64,7 @@ export function getProblemMessage(logEntry: any): string {
 
 	addMessagePart(logEntry.msg);
 	addMessagePart(_.get(logEntry, 'err.message'));
+	addMessagePart(_.get(logEntry, 'data.error.message'));
 
 	if (!message) {
 		message = JSON.stringify(logEntry);
