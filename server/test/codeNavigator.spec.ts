@@ -140,7 +140,7 @@ describe('CodeNavigator', () => {
                 uri: 'ContentConversionService.log',
                 range: {
                     start: { line: 1, character: 0 },
-                    end: { line: 1, character: 350 }
+                    end: { line: 1, character: 554 }
                 }
             });
         });

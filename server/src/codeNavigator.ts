@@ -21,7 +21,7 @@ export class CodeNavigator {
     public getDefinition(reqLogItem: any): Location {
         if (reqLogItem.reqBegin) {
             const request = reqLogItem.req;
-            const serviceFile = this.getLogFileForRequest(request.method, request.path);
+            const serviceFile = this.getLogFileForRequest(/*request.method,*/ request.path);
             if (!serviceFile) {
                 return null;
             }
@@ -56,9 +56,20 @@ export class CodeNavigator {
 
                     const reqTime = Date.parse(reqLogItem.time);
                     const logLines = parseTextLog(text);
-                    _(logLines)
+                    const defLogItem =  _(logLines)
                         .filter(logLine => logLine.logItem.gid === reqLogItem.gid)
-                        .filter(logLine => logLine.logItem.reqBegin)
+                        .filter(logLine => logLine.logItem.reqBegin && logLine.logItem.req && logLine.logItem.req.path === reqLogItem.req.path)
+                        .filter(logLine => Date.parse(logLine.logItem.time) <= reqTime)
+                        .last();
+
+                    if (defLogItem) {
+                        return Location.create(serviceLogUri, Range.create(
+                            Position.create(defLogItem.line, 0),
+                            Position.create(defLogItem.line, defLogItem.source.length)
+                        ));
+                    } else {
+                        return null;
+                    }        
                 }
             }
         }
@@ -66,7 +77,7 @@ export class CodeNavigator {
         return null;
     }
 
-    private getLogFileForRequest(method: string, path: string): string {
+    private getLogFileForRequest(/*method: string,*/ path: string): string {
         const servicePrefix = _(path)
             .split('/')
             .compact()
