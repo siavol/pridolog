@@ -2,7 +2,7 @@
 
 This is a VS Code extension for viewing and navigating thru PrizmDoc log files.
 
-See the [readme](.\client\README.md) to know more about possibilities.
+See the [readme](./client/README.md) to know more about possibilities.
 
 # Installation
 
