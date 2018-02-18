@@ -33,4 +33,8 @@ export class DocumentsProvider {
         var path = uriToPath(normUri);
         return path;
     }
+
+    public getUriForRelativePath(filePath: string): string {
+        return fileUrl(path.join(this.workspaceRoot, filePath));
+    }
 }
