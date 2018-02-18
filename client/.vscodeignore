@@ -3,6 +3,7 @@ typings/**
 out/test/**
 test/**
 src/**
+server/test/**
 **/*.map
 .gitignore
 tsconfig.json
