@@ -1,12 +1,14 @@
 'use strict';
 
+import * as _ from 'lodash'
 import {
 	IPCMessageReader, IPCMessageWriter, createConnection, IConnection, TextDocuments,
 	InitializeResult, TextDocumentPositionParams, CompletionItem, 
 	CompletionItemKind,
 	ReferenceParams,
-	Location,
-	TextDocumentSyncKind
+	Location, Range, Position,
+	TextDocumentSyncKind,
+	CodeLensParams, CodeLens
 } from 'vscode-languageserver';
 import { getTextLines } from './textLog'
 import { DocumentsProvider } from './documentsProvider'
@@ -30,8 +32,8 @@ let documentsProvider: DocumentsProvider;
 let codeNavigator: CodeNavigator;
 connection.onInitialize((params): InitializeResult => {
 	workspaceRoot = params.rootPath;
-	connection.console.log(`Opening workspace: ${workspaceRoot}`);
-	connection.console.log(`Text document sync is FULL: ${documents.syncKind === TextDocumentSyncKind.Full}`);
+	// connection.console.log(`Opening workspace: ${workspaceRoot}`);
+	// connection.console.log(`Text document sync is FULL: ${documents.syncKind === TextDocumentSyncKind.Full}`);
 
 	documentsProvider = new DocumentsProvider(workspaceRoot, documents);
 	codeNavigator = new CodeNavigator(documentsProvider);
@@ -45,7 +47,10 @@ connection.onInitialize((params): InitializeResult => {
 				resolveProvider: true
 			},
 			referencesProvider: true,
-			definitionProvider: true
+			definitionProvider: true,
+			codeLensProvider: {
+				resolveProvider: true
+			}
 		}
 	}
 });
@@ -130,7 +135,7 @@ connection.onDidOpenTextDocument((params) => {
 	// A text document got opened in VSCode.
 	// params.uri uniquely identifies the document. For documents store on disk this is a file URI.
 	// params.text the initial full content of the document.
-	connection.console.log(`connection opened, ${JSON.stringify(params.textDocument)}.`);
+	// connection.console.log(`connection opened, ${JSON.stringify(params.textDocument)}.`);
 
 	// const textDocument = documents.get(params.textDocument.uri);
 	validateTextDocument(params.textDocument.text, params.textDocument.uri);
@@ -169,6 +174,27 @@ connection.onDefinition((params: TextDocumentPositionParams): Location => {
 	console.log(params);
 	const logItem = getLogItem(params);
 	return codeNavigator.getDefinition(logItem);
+});
+
+connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
+	
+	const tasks = codeNavigator.getTasksFromTheLogFile(params.textDocument.uri);
+	return _(tasks)
+		.filter(t => t.taskBegin && t.taskEnd)
+		.map(t => {
+			const beginTime = Date.parse(t.taskBegin.logItem.time);
+			const endTime = Date.parse(t.taskEnd.logItem.time);
+			const timeSpend = new Date(endTime - beginTime);
+
+			const range = Range.create(
+				Position.create(t.taskBegin.line, 0),
+				Position.create(t.taskEnd.line, t.taskEnd.source.length));
+			return CodeLens.create(range, {
+				taskId: t.taskBegin.logItem.taskid,
+				timeInSeconds: timeSpend.getSeconds()
+			});
+		})
+		.value()
 });
 
 // Listen on the connection

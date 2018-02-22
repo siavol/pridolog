@@ -1,8 +1,13 @@
 import * as _ from 'lodash'
 import { Location, Range, Position } from 'vscode-languageserver'
 import { DocumentsProvider } from './documentsProvider'
-import { parseTextLog } from './textLog'
+import { parseTextLog, ILogLine } from './textLog'
 import { services, getServiceByRequestPath } from './prizmServices'
+
+export interface ILogTask {
+    taskBegin: ILogLine;
+    taskEnd: ILogLine;
+}
 
 export class CodeNavigator {
     constructor(private readonly documentsProvider: DocumentsProvider) { }
@@ -80,5 +85,34 @@ export class CodeNavigator {
     private getLogFileForRequest(/*method: string,*/ path: string): string {
         const serviceInfo = getServiceByRequestPath(path);
         return serviceInfo ? serviceInfo.logFile : null;
+    }
+
+    public getTasksFromTheLogFile(uri: string): ILogTask[] {
+        const text = this.documentsProvider.getDocumentText(uri);
+        const logLines = parseTextLog(text);
+
+        let tasksMap = new Map<string, ILogTask>();
+
+        function getKey(logItem: any) {
+            return `${logItem.any}::${logItem.taskid}`;
+        }
+
+        logLines.forEach(logLine => {
+            if (logLine.logItem.taskBegin) {
+                const task = {
+                    taskBegin: logLine,
+                    taskEnd: null as ILogLine
+                };
+                
+                tasksMap.set(getKey(logLine.logItem), task);
+            } else if (logLine.logItem.taskEnd) {
+                const task = tasksMap.get(getKey(logLine.logItem));
+                if (task) {
+                    task.taskEnd = logLine;
+                }
+            }
+        });
+
+        return Array.from(tasksMap.values());
     }
 }

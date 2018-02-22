@@ -4,6 +4,7 @@ import * as _ from 'lodash'
 
 import { DocumentsProvider } from '../src/documentsProvider'
 import { CodeNavigator } from '../src/codeNavigator'
+import { parseTextLog, getTextLines, ILogLine } from '../src/textLog'
 import { emailSession, ccsOfficeToPdfConversionSession } from './testLogs'
 
 describe('CodeNavigator', () => {
@@ -143,6 +144,42 @@ describe('CodeNavigator', () => {
                     end: { line: 1, character: 554 }
                 }
             });
+        });
+    });
+
+    describe('getTasksFromTheLogFile', () => {
+        let codeNavigator: CodeNavigator;
+
+        beforeEach(() => {
+            const documentsProvider = new DocumentsProvider(null, null);
+            sinon.stub(documentsProvider, 'getDocuments')
+                .returns([
+                    'ECS.log',
+                    'OCS.log'
+                ]);
+            const getDocumentText = sinon.stub(documentsProvider, 'getDocumentText');
+            getDocumentText.withArgs('ECS.log').returns(emailSession.ecs);
+            getDocumentText.withArgs('OCS.log').returns(emailSession.ocs);
+
+            codeNavigator = new CodeNavigator(documentsProvider);
+        });
+
+        it('should return tasks from the log file', () => {
+            const logText = emailSession.ecs;
+            const logLines = parseTextLog(logText);
+
+            const tasks = codeNavigator.getTasksFromTheLogFile('ECS.log');
+
+            expect(tasks).eql([
+                {
+                    taskBegin: logLines[2],
+                    taskEnd: logLines[8]
+                },
+                {
+                    taskBegin: logLines[10],
+                    taskEnd: null
+                }
+            ]);
         });
     });
 });
