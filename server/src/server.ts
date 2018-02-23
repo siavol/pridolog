@@ -195,19 +195,23 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
 	return _(tasks)
 		.filter(t => t.taskBegin && t.taskEnd)
 		.map(t => {
+			const beginLogItem = t.taskBegin.logItem;
 			const range = Range.create(
 				Position.create(t.taskBegin.line, 0),
 				Position.create(t.taskEnd.line, t.taskEnd.source.length));
-			const lens = CodeLens.create(range, t);
+			const taskBeginLens = CodeLens.create(range, t.taskBegin);
+			taskBeginLens.command = Command.create(`Task ${beginLogItem.taskid} (${beginLogItem.gid}) started`, null);
 
-			const beginTime = Date.parse(t.taskBegin.logItem.time);
+			const taskEndLens = CodeLens.create(range, t);
+			const beginTime = Date.parse(beginLogItem.time);
 			const endTime = Date.parse(t.taskEnd.logItem.time);
 			const timeSpend = new Date(endTime - beginTime);
 			const lensTitle = `Task completed in ${timeSpend.getMilliseconds()}ms`
-			lens.command = Command.create(lensTitle, 'pridolog.revealLine', 
+			taskEndLens.command = Command.create(lensTitle, 'pridolog.revealLine', 
 				{ lineNumber: t.taskEnd.line });
-			return lens;
+			return [taskBeginLens, taskEndLens];
 		})
+		.flatten()
 		.value()
 });
 
