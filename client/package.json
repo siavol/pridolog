@@ -46,27 +46,28 @@
 		],
 		"configuration": {
 			"type": "object",
-			"title": "Example configuration",
+			"title": "pridolog configuration",
 			"properties": {
-				"lspSample.maxNumberOfProblems": {
+				"pridolog.showLongOperations.enabled": {
+					"scope": "resource",
+					"type": "boolean",
+					"default": true,
+					"description": "Turns on or off CodeLens for operations longer than some time."
+				},
+				"pridolog.showLongOperations.durationInMs": {
 					"scope": "resource",
 					"type": "number",
-					"default": 100,
-					"description": "Controls the maximum number of problems produced by the server."
-				},
-				"lspSample.trace.server": {
-					"scope": "window",
-					"type": "string",
-					"enum": [
-						"off",
-						"messages",
-						"verbose"
-					],
-					"default": "off",
-					"description": "Traces the communication between VSCode and the language server."
+					"default": 1000
 				}
 			}
-		}
+		},
+		"commands":[
+			{
+				"command": "pridolog.operationDuration",
+				"title": "Show operation duration",
+				"category": "pridolog"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "tsc -p ./",

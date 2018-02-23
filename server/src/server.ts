@@ -8,7 +8,8 @@ import {
 	ReferenceParams,
 	Location, Range, Position,
 	TextDocumentSyncKind,
-	CodeLensParams, CodeLens
+	CodeLensParams, CodeLens,
+	Command
 } from 'vscode-languageserver';
 import { getTextLines } from './textLog'
 import { DocumentsProvider } from './documentsProvider'
@@ -57,36 +58,44 @@ connection.onInitialize((params): InitializeResult => {
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
-documents.onDidChangeContent((change) => {
-	connection.console.log(`DOCUMENTS change: ${JSON.stringify(change)}`);
+// documents.onDidChangeContent((change) => {
+	// connection.console.log(`DOCUMENTS change: ${JSON.stringify(change)}`);
 	// validateTextDocument(change.document);
-});
+// });
 
-documents.onDidOpen(e => {
-	connection.console.log(`DOCUMENTS open: ${JSON.stringify(e)}`);
-});
+// documents.onDidOpen(e => {
+	// connection.console.log(`DOCUMENTS open: ${JSON.stringify(e)}`);
+// });
+
 
 // The settings interface describe the server relevant settings part
-// interface Settings {
-// 	lspSample: ExampleSettings;
-// }
+interface Settings {
+	pridolog: PridologSettings;
+}
 
-// These are the example settings we defined in the client's package.json
-// file
-// interface ExampleSettings {
-// 	maxNumberOfProblems: number;
-// }
+interface PridologSettings {
+	showLongOperations: {
+		enabled: boolean;
+		durationInMs: number;
+	};
+}
 
-// hold the maxNumberOfProblems setting
-// let maxNumberOfProblems: number;
+// The duration in ms for the long operation of -1 if this analysis is disabled
+let longOperationDurationMs: number = -1;
 // The settings have changed. Is send on server activation
 // as well.
-// connection.onDidChangeConfiguration((change) => {
-	// let settings = <Settings>change.settings;
-	// maxNumberOfProblems = settings.lspSample.maxNumberOfProblems || 100;
-	// Revalidate any open text documents
-	// documents.all().forEach(validateTextDocument);
-// });
+connection.onDidChangeConfiguration((change) => {
+	let settings = <Settings>change.settings;
+	if (settings.pridolog 
+		&& settings.pridolog.showLongOperations
+		&& settings.pridolog.showLongOperations.enabled) {
+		
+		longOperationDurationMs = settings.pridolog.showLongOperations.durationInMs || 1000;
+	} else {
+		longOperationDurationMs = -1;
+	}
+});
+
 
 function validateTextDocument(documentText: string, documentUri: string): void {
 	const diagnostics = findLogProblems(documentText);
@@ -176,25 +185,34 @@ connection.onDefinition((params: TextDocumentPositionParams): Location => {
 	return codeNavigator.getDefinition(logItem);
 });
 
+//
+// Code lens
+//
+
 connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
 	
 	const tasks = codeNavigator.getTasksFromTheLogFile(params.textDocument.uri);
 	return _(tasks)
 		.filter(t => t.taskBegin && t.taskEnd)
 		.map(t => {
-			const beginTime = Date.parse(t.taskBegin.logItem.time);
-			const endTime = Date.parse(t.taskEnd.logItem.time);
-			const timeSpend = new Date(endTime - beginTime);
-
 			const range = Range.create(
 				Position.create(t.taskBegin.line, 0),
 				Position.create(t.taskEnd.line, t.taskEnd.source.length));
-			return CodeLens.create(range, {
-				taskId: t.taskBegin.logItem.taskid,
-				timeInSeconds: timeSpend.getSeconds()
-			});
+			const lens = CodeLens.create(range, t);
+
+			const beginTime = Date.parse(t.taskBegin.logItem.time);
+			const endTime = Date.parse(t.taskEnd.logItem.time);
+			const timeSpend = new Date(endTime - beginTime);
+			const lensTitle = `Task completed in ${timeSpend.getMilliseconds()}ms`
+			lens.command = Command.create(lensTitle, 'pridolog.revealLine', 
+				{ lineNumber: t.taskEnd.line });
+			return lens;
 		})
 		.value()
+});
+
+connection.onCodeLensResolve((lens: CodeLens): CodeLens => {
+	return lens;
 });
 
 // Listen on the connection
