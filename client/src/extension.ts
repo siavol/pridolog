@@ -42,12 +42,12 @@ export function activate(context: ExtensionContext) {
 	//
 	// Commands
 	//
-	// let opDurationCommand = commands.registerTextEditorCommand('pridolog.operationDuration',
-	// 	(textEditor: TextEditor, edit: TextEditorEdit): any[] => {
-	// 		window.showInformationMessage('Some duration will be here');
-	// 		return [];
-	// 	});
-	// context.subscriptions.push(opDurationCommand);
+	let opDurationCommand = commands.registerTextEditorCommand('pridolog.operationDuration',
+		(textEditor: TextEditor, edit: TextEditorEdit): any[] => {
+			window.showInformationMessage('Some duration will be here');
+			return [];
+		});
+	context.subscriptions.push(opDurationCommand);
 
 	let revealLineCommand = commands.registerTextEditorCommand('pridolog.revealLine', 
 		(textEditor: TextEditor, edit: TextEditorEdit, arg: { lineNumber: number }) => {
