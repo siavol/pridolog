@@ -4,7 +4,7 @@ import * as _ from 'lodash'
 
 import { DocumentsProvider } from '../src/documentsProvider'
 import { CodeNavigator } from '../src/codeNavigator'
-import { parseTextLog, getTextLines, ILogLine } from '../src/textLog'
+import { parseTextLog } from '../src/textLog'
 import { emailSession, ccsOfficeToPdfConversionSession } from './testLogs'
 
 describe('CodeNavigator', () => {

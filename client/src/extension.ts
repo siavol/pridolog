@@ -2,7 +2,7 @@
 
 import * as path from 'path';
 
-import { workspace, ExtensionContext, commands, TextEditor, TextEditorEdit, window, Selection } from 'vscode';
+import { workspace, window, ExtensionContext, commands, TextEditor, TextEditorEdit, Selection } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
 
 export function activate(context: ExtensionContext) {
@@ -32,25 +32,30 @@ export function activate(context: ExtensionContext) {
 	}
 	
 	// Create the language client and start the client.
-	let disposable = new LanguageClient('pridolog', 'PrizmDoc logs Server', serverOptions, clientOptions).start();
-	
+	const languageClient = new LanguageClient('pridolog', 'PrizmDoc logs Server', serverOptions, clientOptions);
+	let disposable = languageClient.start();	
 	// Push the disposable to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(disposable);
+
+	// languageClient.
 
 
 	//
 	// Commands
 	//
 	let opDurationCommand = commands.registerTextEditorCommand('pridolog.operationDuration',
-		(textEditor: TextEditor, edit: TextEditorEdit): any[] => {
-			window.showInformationMessage('Some duration will be here');
-			return [];
+		(textEditor: TextEditor) => {
+			commands.executeCommand('pridolog.serverGetOperationDuration', 
+				textEditor.document.uri, textEditor.selection.active.line)
+				.then((result) => {
+					window.showInformationMessage('Some duration will be here: ' + JSON.stringify(result));
+				});			
 		});
 	context.subscriptions.push(opDurationCommand);
 
 	let revealLineCommand = commands.registerTextEditorCommand('pridolog.revealLine', 
-		(textEditor: TextEditor, edit: TextEditorEdit, arg: { lineNumber: number }) => {
+		(textEditor: TextEditor, _edit: TextEditorEdit, arg: { lineNumber: number }) => {
 			let range = textEditor.document.lineAt(arg.lineNumber).range;
 			textEditor.selection = new Selection(range.start, range.end);
 			textEditor.revealRange(range);
