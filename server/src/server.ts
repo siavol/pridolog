@@ -3,11 +3,9 @@
 import * as _ from 'lodash'
 import {
 	IPCMessageReader, IPCMessageWriter, createConnection, IConnection, TextDocuments,
-	InitializeResult, TextDocumentPositionParams, CompletionItem, 
-	CompletionItemKind,
+	InitializeResult, TextDocumentPositionParams,
 	ReferenceParams,
 	Location, Range, Position,
-	TextDocumentSyncKind,
 	CodeLensParams, CodeLens,
 	Command
 } from 'vscode-languageserver';
@@ -43,10 +41,6 @@ connection.onInitialize((params): InitializeResult => {
 		capabilities: {
 			// Tell the client that the server works in FULL text document sync mode
 			textDocumentSync: documents.syncKind,
-			// Tell the client that the server support code complete
-			completionProvider: {
-				resolveProvider: true
-			},
 			referencesProvider: true,
 			definitionProvider: true,
 			codeLensProvider: {
@@ -107,39 +101,6 @@ connection.onDidChangeWatchedFiles((_change) => {
 	connection.console.log('We received an file change event');
 });
 
-
-// This handler provides the initial list of the completion items.
-connection.onCompletion((_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-	// The pass parameter contains the position of the text document in 
-	// which code complete got requested. For the example we ignore this
-	// info and always provide the same completion items.
-	return [
-		{
-			label: 'TypeScript',
-			kind: CompletionItemKind.Text,
-			data: 1
-		},
-		{
-			label: 'JavaScript',
-			kind: CompletionItemKind.Text,
-			data: 2
-		}
-	]
-});
-
-// This handler resolve additional information for the item selected in
-// the completion list.
-connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-	if (item.data === 1) {
-		item.detail = 'TypeScript details',
-			item.documentation = 'TypeScript documentation'
-	} else if (item.data === 2) {
-		item.detail = 'JavaScript details',
-			item.documentation = 'JavaScript documentation'
-	}
-	return item;
-});
-
 connection.onDidOpenTextDocument((params) => {
 	// A text document got opened in VSCode.
 	// params.uri uniquely identifies the document. For documents store on disk this is a file URI.
@@ -192,7 +153,7 @@ connection.onDefinition((params: TextDocumentPositionParams): Location => {
 connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
 	
 	const tasks = codeNavigator.getTasksFromTheLogFile(params.textDocument.uri);
-	return _(tasks)
+	let codeLenses = _(tasks)
 		.filter(t => t.taskBegin && t.taskEnd)
 		.map(t => {
 			const beginLogItem = t.taskBegin.logItem;
@@ -213,6 +174,23 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
 		})
 		.flatten()
 		.value()
+
+	if (longOperationDurationMs > 0) {
+		const longOperationsLenses = codeNavigator.getOperationsLongerThan(
+			params.textDocument.uri, longOperationDurationMs)
+			.map(operation => {
+				const range = Range.create(
+					Position.create(operation.logLine.line, 0),
+					Position.create(operation.logLine.line, operation.logLine.source.length)
+				);
+				const lens = CodeLens.create(range, operation);
+				lens.command = Command.create(`Operation duration: ${operation.durationMs} ms`, null);
+				return lens;
+			});
+		codeLenses = _.union(codeLenses, longOperationsLenses);
+	}
+
+	return codeLenses;
 });
 
 connection.onCodeLensResolve((lens: CodeLens): CodeLens => {

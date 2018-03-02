@@ -4,7 +4,7 @@ import * as _ from 'lodash'
 
 import { DocumentsProvider } from '../src/documentsProvider'
 import { CodeNavigator } from '../src/codeNavigator'
-import { parseTextLog, getTextLines, ILogLine } from '../src/textLog'
+import { parseTextLog } from '../src/textLog'
 import { emailSession, ccsOfficeToPdfConversionSession } from './testLogs'
 
 describe('CodeNavigator', () => {
@@ -180,6 +180,35 @@ describe('CodeNavigator', () => {
                     taskEnd: null
                 }
             ]);
+        });
+    });
+
+    describe('getOperationsLongerThan', () => {
+        let codeNavigator: CodeNavigator;
+
+        beforeEach(() => {
+            const documentsProvider = new DocumentsProvider(null, null);
+            sinon.stub(documentsProvider, 'getDocuments')
+                .returns([
+                    'OCS.log'
+                ]);
+            const getDocumentText = sinon.stub(documentsProvider, 'getDocumentText');
+            getDocumentText.withArgs('OCS.log').returns(emailSession.ocs);
+
+            codeNavigator = new CodeNavigator(documentsProvider);
+        });
+
+        it('should return operations longer than minDuration (ms)', () => {
+            const logText = emailSession.ocs;
+            const logLines = parseTextLog(logText);
+            
+            const operations = codeNavigator.getOperationsLongerThan('OCS.log', 100);
+            expect(operations).eql([
+                {
+                    logLine: logLines[2],
+                    durationMs: 169
+                }
+            ])
         });
     });
 });

@@ -2,7 +2,10 @@
 
 import * as path from 'path';
 
-import { workspace, ExtensionContext, commands, TextEditor, TextEditorEdit, window, Selection } from 'vscode';
+import {
+	workspace, //window,
+	ExtensionContext, commands, TextEditor, TextEditorEdit, 
+	Selection } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
 
 export function activate(context: ExtensionContext) {
@@ -50,7 +53,7 @@ export function activate(context: ExtensionContext) {
 	// context.subscriptions.push(opDurationCommand);
 
 	let revealLineCommand = commands.registerTextEditorCommand('pridolog.revealLine', 
-		(textEditor: TextEditor, edit: TextEditorEdit, arg: { lineNumber: number }) => {
+		(textEditor: TextEditor, _edit: TextEditorEdit, arg: { lineNumber: number }) => {
 			let range = textEditor.document.lineAt(arg.lineNumber).range;
 			textEditor.selection = new Selection(range.start, range.end);
 			textEditor.revealRange(range);

@@ -9,6 +9,11 @@ export interface ILogTask {
     taskEnd: ILogLine;
 }
 
+export interface ILogOperationDuration {
+    logLine: ILogLine;
+    durationMs: number;
+}
+
 export class CodeNavigator {
     constructor(private readonly documentsProvider: DocumentsProvider) { }
 
@@ -87,15 +92,15 @@ export class CodeNavigator {
         return serviceInfo ? serviceInfo.logFile : null;
     }
 
+    private getTaskKey(logItem: any) {
+        return `${logItem.gid}::${logItem.taskid}`;
+    }
+
     public getTasksFromTheLogFile(uri: string): ILogTask[] {
         const text = this.documentsProvider.getDocumentText(uri);
         const logLines = parseTextLog(text);
 
         let tasksMap = new Map<string, ILogTask>();
-
-        function getKey(logItem: any) {
-            return `${logItem.any}::${logItem.taskid}`;
-        }
 
         logLines.forEach(logLine => {
             if (logLine.logItem.taskBegin) {
@@ -104,9 +109,9 @@ export class CodeNavigator {
                     taskEnd: null as ILogLine
                 };
                 
-                tasksMap.set(getKey(logLine.logItem), task);
+                tasksMap.set(this.getTaskKey(logLine.logItem), task);
             } else if (logLine.logItem.taskEnd) {
-                const task = tasksMap.get(getKey(logLine.logItem));
+                const task = tasksMap.get(this.getTaskKey(logLine.logItem));
                 if (task) {
                     task.taskEnd = logLine;
                 }
@@ -114,5 +119,29 @@ export class CodeNavigator {
         });
 
         return Array.from(tasksMap.values());
+    }
+
+    public getOperationsLongerThan(uri: string, minDuration: number): ILogOperationDuration[] {
+        const text = this.documentsProvider.getDocumentText(uri);
+        const logLines = parseTextLog(text);
+
+        let lastTaskLineMap = new Map<string, ILogLine>();
+        let result = [] as ILogOperationDuration[];
+
+        logLines.forEach(logLine => {
+            const key = this.getTaskKey(logLine.logItem);
+            const prevLogLine = lastTaskLineMap.get(key);
+            if (prevLogLine) {
+                const prevTime = Date.parse(prevLogLine.logItem.time);
+                const thisTime = Date.parse(logLine.logItem.time);
+                const durationMs = thisTime - prevTime;
+                if (durationMs > minDuration) {
+                    result.push({ logLine: prevLogLine, durationMs });
+                }
+            }
+            lastTaskLineMap.set(key, logLine);
+        });
+
+        return result;
     }
 }
