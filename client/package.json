@@ -52,12 +52,13 @@
 					"scope": "resource",
 					"type": "boolean",
 					"default": true,
-					"description": "Turns on or off CodeLens for operations longer than some time."
+					"description": "Enables CodeLens for long operations."
 				},
 				"pridolog.showLongOperations.durationInMs": {
 					"scope": "resource",
 					"type": "number",
-					"default": 1000
+					"default": 1000,
+					"description": "Controls for how long operation (in milliseconds) CodeLens should be shown."
 				}
 			}
 		},
