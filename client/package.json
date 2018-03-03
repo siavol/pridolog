@@ -57,7 +57,7 @@
 				"pridolog.showLongOperations.durationInMs": {
 					"scope": "resource",
 					"type": "number",
-					"default": 1000,
+					"default": 100,
 					"description": "Controls for how long operation (in milliseconds) CodeLens should be shown."
 				}
 			}

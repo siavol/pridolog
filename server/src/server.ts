@@ -85,7 +85,7 @@ connection.onDidChangeConfiguration((change) => {
 		&& settings.pridolog.showLongOperations
 		&& settings.pridolog.showLongOperations.enabled) {
 		
-		longOperationDurationMs = settings.pridolog.showLongOperations.durationInMs || 1000;
+		longOperationDurationMs = settings.pridolog.showLongOperations.durationInMs;
 	} else {
 		longOperationDurationMs = -1;
 	}
