@@ -19,6 +19,7 @@ pridolog highlights all tasks for you. You can click on task CodeLens to navigat
 pridolog finds all long operations. You can control it with settings
 - *pridolog.showLongOperations.enabled*
 - *pridolog.showLongOperations.durationInMs*
+![CodeLens](https://git.jpg.com/ishestakov/pridolog/raw/master/tutorial-gifs/code-lens-tasks.png)
 
 ### Requests navigation
 Use *Go to Definition* and *Peek Definition* commands to navigate thru request log entries:
