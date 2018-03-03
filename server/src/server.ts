@@ -13,6 +13,7 @@ import { getTextLines } from './textLog'
 import { DocumentsProvider } from './documentsProvider'
 import { CodeNavigator } from './codeNavigator'
 import { findLogProblems } from './diagnostics'
+import { durationFormat } from './time'
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -167,7 +168,7 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
 			const beginTime = Date.parse(beginLogItem.time);
 			const endTime = Date.parse(t.taskEnd.logItem.time);
 			const timeSpend = new Date(endTime - beginTime);
-			const lensTitle = `Task completed in ${timeSpend.getMilliseconds()}ms`
+			const lensTitle = `Task completed in ${durationFormat(timeSpend)}`
 			taskEndLens.command = Command.create(lensTitle, 'pridolog.revealLine', 
 				{ lineNumber: t.taskEnd.line });
 			return [taskBeginLens, taskEndLens];
@@ -184,7 +185,7 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
 					Position.create(operation.logLine.line, operation.logLine.source.length)
 				);
 				const lens = CodeLens.create(range, operation);
-				lens.command = Command.create(`Operation duration: ${operation.durationMs} ms`, null);
+				lens.command = Command.create(`Operation duration: ${durationFormat(operation.durationMs)}`, null);
 				return lens;
 			});
 		codeLenses = _.union(codeLenses, longOperationsLenses);
