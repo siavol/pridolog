@@ -1,17 +1,19 @@
 'use strict';
 
+import * as _ from 'lodash'
 import {
 	IPCMessageReader, IPCMessageWriter, createConnection, IConnection, TextDocuments,
-	InitializeResult, TextDocumentPositionParams, CompletionItem, 
-	CompletionItemKind,
+	InitializeResult, TextDocumentPositionParams,
 	ReferenceParams,
-	Location,
-	TextDocumentSyncKind
+	Location, Range, Position,
+	CodeLensParams, CodeLens,
+	Command
 } from 'vscode-languageserver';
 import { getTextLines } from './textLog'
 import { DocumentsProvider } from './documentsProvider'
 import { CodeNavigator } from './codeNavigator'
 import { findLogProblems } from './diagnostics'
+import { durationFormat } from './time'
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -30,8 +32,8 @@ let documentsProvider: DocumentsProvider;
 let codeNavigator: CodeNavigator;
 connection.onInitialize((params): InitializeResult => {
 	workspaceRoot = params.rootPath;
-	connection.console.log(`Opening workspace: ${workspaceRoot}`);
-	connection.console.log(`Text document sync is FULL: ${documents.syncKind === TextDocumentSyncKind.Full}`);
+	// connection.console.log(`Opening workspace: ${workspaceRoot}`);
+	// connection.console.log(`Text document sync is FULL: ${documents.syncKind === TextDocumentSyncKind.Full}`);
 
 	documentsProvider = new DocumentsProvider(workspaceRoot, documents);
 	codeNavigator = new CodeNavigator(documentsProvider);
@@ -40,48 +42,55 @@ connection.onInitialize((params): InitializeResult => {
 		capabilities: {
 			// Tell the client that the server works in FULL text document sync mode
 			textDocumentSync: documents.syncKind,
-			// Tell the client that the server support code complete
-			completionProvider: {
-				resolveProvider: true
-			},
 			referencesProvider: true,
-			definitionProvider: true
+			definitionProvider: true,
+			codeLensProvider: {
+				resolveProvider: true
+			}
 		}
 	}
 });
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
-documents.onDidChangeContent((change) => {
-	connection.console.log(`DOCUMENTS change: ${JSON.stringify(change)}`);
+// documents.onDidChangeContent((change) => {
+	// connection.console.log(`DOCUMENTS change: ${JSON.stringify(change)}`);
 	// validateTextDocument(change.document);
-});
+// });
 
-documents.onDidOpen(e => {
-	connection.console.log(`DOCUMENTS open: ${JSON.stringify(e)}`);
-});
+// documents.onDidOpen(e => {
+	// connection.console.log(`DOCUMENTS open: ${JSON.stringify(e)}`);
+// });
+
 
 // The settings interface describe the server relevant settings part
-// interface Settings {
-// 	lspSample: ExampleSettings;
-// }
+interface Settings {
+	pridolog: PridologSettings;
+}
 
-// These are the example settings we defined in the client's package.json
-// file
-// interface ExampleSettings {
-// 	maxNumberOfProblems: number;
-// }
+interface PridologSettings {
+	showLongOperations: {
+		enabled: boolean;
+		durationInMs: number;
+	};
+}
 
-// hold the maxNumberOfProblems setting
-// let maxNumberOfProblems: number;
+// The duration in ms for the long operation of -1 if this analysis is disabled
+let longOperationDurationMs: number = -1;
 // The settings have changed. Is send on server activation
 // as well.
-// connection.onDidChangeConfiguration((change) => {
-	// let settings = <Settings>change.settings;
-	// maxNumberOfProblems = settings.lspSample.maxNumberOfProblems || 100;
-	// Revalidate any open text documents
-	// documents.all().forEach(validateTextDocument);
-// });
+connection.onDidChangeConfiguration((change) => {
+	let settings = <Settings>change.settings;
+	if (settings.pridolog 
+		&& settings.pridolog.showLongOperations
+		&& settings.pridolog.showLongOperations.enabled) {
+		
+		longOperationDurationMs = settings.pridolog.showLongOperations.durationInMs;
+	} else {
+		longOperationDurationMs = -1;
+	}
+});
+
 
 function validateTextDocument(documentText: string, documentUri: string): void {
 	const diagnostics = findLogProblems(documentText);
@@ -93,44 +102,11 @@ connection.onDidChangeWatchedFiles((_change) => {
 	connection.console.log('We received an file change event');
 });
 
-
-// This handler provides the initial list of the completion items.
-connection.onCompletion((_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-	// The pass parameter contains the position of the text document in 
-	// which code complete got requested. For the example we ignore this
-	// info and always provide the same completion items.
-	return [
-		{
-			label: 'TypeScript',
-			kind: CompletionItemKind.Text,
-			data: 1
-		},
-		{
-			label: 'JavaScript',
-			kind: CompletionItemKind.Text,
-			data: 2
-		}
-	]
-});
-
-// This handler resolve additional information for the item selected in
-// the completion list.
-connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-	if (item.data === 1) {
-		item.detail = 'TypeScript details',
-			item.documentation = 'TypeScript documentation'
-	} else if (item.data === 2) {
-		item.detail = 'JavaScript details',
-			item.documentation = 'JavaScript documentation'
-	}
-	return item;
-});
-
 connection.onDidOpenTextDocument((params) => {
 	// A text document got opened in VSCode.
 	// params.uri uniquely identifies the document. For documents store on disk this is a file URI.
 	// params.text the initial full content of the document.
-	connection.console.log(`connection opened, ${JSON.stringify(params.textDocument)}.`);
+	// connection.console.log(`connection opened, ${JSON.stringify(params.textDocument)}.`);
 
 	// const textDocument = documents.get(params.textDocument.uri);
 	validateTextDocument(params.textDocument.text, params.textDocument.uri);
@@ -169,6 +145,57 @@ connection.onDefinition((params: TextDocumentPositionParams): Location => {
 	console.log(params);
 	const logItem = getLogItem(params);
 	return codeNavigator.getDefinition(logItem);
+});
+
+//
+// Code lens
+//
+
+connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
+	
+	const tasks = codeNavigator.getTasksFromTheLogFile(params.textDocument.uri);
+	let codeLenses = _(tasks)
+		.filter(t => t.taskBegin && t.taskEnd)
+		.map(t => {
+			const beginLogItem = t.taskBegin.logItem;
+			const range = Range.create(
+				Position.create(t.taskBegin.line, 0),
+				Position.create(t.taskEnd.line, t.taskEnd.source.length));
+			const taskBeginLens = CodeLens.create(range, t.taskBegin);
+			taskBeginLens.command = Command.create(`Task ${beginLogItem.taskid} (${beginLogItem.gid}) started`, null);
+
+			const taskEndLens = CodeLens.create(range, t);
+			const beginTime = Date.parse(beginLogItem.time);
+			const endTime = Date.parse(t.taskEnd.logItem.time);
+			const timeSpend = new Date(endTime - beginTime);
+			const lensTitle = `Task completed in ${durationFormat(timeSpend)}`
+			taskEndLens.command = Command.create(lensTitle, 'pridolog.revealLine', 
+				{ lineNumber: t.taskEnd.line });
+			return [taskBeginLens, taskEndLens];
+		})
+		.flatten()
+		.value()
+
+	if (longOperationDurationMs > 0) {
+		const longOperationsLenses = codeNavigator.getOperationsLongerThan(
+			params.textDocument.uri, longOperationDurationMs)
+			.map(operation => {
+				const range = Range.create(
+					Position.create(operation.logLine.line, 0),
+					Position.create(operation.logLine.line, operation.logLine.source.length)
+				);
+				const lens = CodeLens.create(range, operation);
+				lens.command = Command.create(`Operation duration: ${durationFormat(operation.durationMs)}`, null);
+				return lens;
+			});
+		codeLenses = _.union(codeLenses, longOperationsLenses);
+	}
+
+	return codeLenses;
+});
+
+connection.onCodeLensResolve((lens: CodeLens): CodeLens => {
+	return lens;
 });
 
 // Listen on the connection

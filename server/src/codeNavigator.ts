@@ -1,8 +1,18 @@
 import * as _ from 'lodash'
 import { Location, Range, Position } from 'vscode-languageserver'
 import { DocumentsProvider } from './documentsProvider'
-import { parseTextLog } from './textLog'
+import { parseTextLog, ILogLine } from './textLog'
 import { services, getServiceByRequestPath } from './prizmServices'
+
+export interface ILogTask {
+    taskBegin: ILogLine;
+    taskEnd: ILogLine;
+}
+
+export interface ILogOperationDuration {
+    logLine: ILogLine;
+    durationMs: number;
+}
 
 export class CodeNavigator {
     constructor(private readonly documentsProvider: DocumentsProvider) { }
@@ -80,5 +90,58 @@ export class CodeNavigator {
     private getLogFileForRequest(/*method: string,*/ path: string): string {
         const serviceInfo = getServiceByRequestPath(path);
         return serviceInfo ? serviceInfo.logFile : null;
+    }
+
+    private getTaskKey(logItem: any) {
+        return `${logItem.gid}::${logItem.taskid}`;
+    }
+
+    public getTasksFromTheLogFile(uri: string): ILogTask[] {
+        const text = this.documentsProvider.getDocumentText(uri);
+        const logLines = parseTextLog(text);
+
+        let tasksMap = new Map<string, ILogTask>();
+
+        logLines.forEach(logLine => {
+            if (logLine.logItem.taskBegin) {
+                const task = {
+                    taskBegin: logLine,
+                    taskEnd: null as ILogLine
+                };
+                
+                tasksMap.set(this.getTaskKey(logLine.logItem), task);
+            } else if (logLine.logItem.taskEnd) {
+                const task = tasksMap.get(this.getTaskKey(logLine.logItem));
+                if (task) {
+                    task.taskEnd = logLine;
+                }
+            }
+        });
+
+        return Array.from(tasksMap.values());
+    }
+
+    public getOperationsLongerThan(uri: string, minDuration: number): ILogOperationDuration[] {
+        const text = this.documentsProvider.getDocumentText(uri);
+        const logLines = parseTextLog(text);
+
+        let lastTaskLineMap = new Map<string, ILogLine>();
+        let result = [] as ILogOperationDuration[];
+
+        logLines.forEach(logLine => {
+            const key = this.getTaskKey(logLine.logItem);
+            const prevLogLine = lastTaskLineMap.get(key);
+            if (prevLogLine) {
+                const prevTime = Date.parse(prevLogLine.logItem.time);
+                const thisTime = Date.parse(logLine.logItem.time);
+                const durationMs = thisTime - prevTime;
+                if (durationMs > minDuration) {
+                    result.push({ logLine: prevLogLine, durationMs });
+                }
+            }
+            lastTaskLineMap.set(key, logLine);
+        });
+
+        return result;
     }
 }
