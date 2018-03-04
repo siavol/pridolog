@@ -1,8 +1,5 @@
 import * as _ from 'lodash'
 
-const msInSecond = 1000;
-const msInMinute = 60 * 1000;
-
 const timeParts = [
     { ms: 60 * 60 * 1000, name: ['hour', 'hours'] },
     { ms: 60 * 1000, name: ['minute', 'minutes'] },

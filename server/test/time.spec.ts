@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { durationFormat } from '../src/time'
 
-describe.only('time', () => {
+describe('time', () => {
 
     [
         { durationInMs: 2, expectedResult: '2 ms' },
