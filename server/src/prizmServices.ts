@@ -2,7 +2,7 @@ import * as _ from 'lodash'
 
 export interface IPrizmDocService {
     name: string;
-    logFile: string;
+    logFile: string | RegExp;
     requestPath?: RegExp;
 }
 
@@ -132,8 +132,11 @@ const serviceDescriptions = {
         name: 'WorkfileService',
         logFile: 'WorkfileService.log',
         requestPath: /\/PCCIS\/v1\/((WorkFile.*)|(Private\/(makeContentsAvailable|getWorkFileInfo|makeWorkFileContentsAvailable|extendExpirationDateTime))|(Service\/Current\/(Info|Health)))/i
+    },
+    pccis: {
+        name: 'PCCIS',
+        logFile: /Pccis\d+\/.*/i
     }
-    // ToDO: PCCIS
 };
 
 type ServiceName = keyof typeof serviceDescriptions;
