@@ -1,3 +1,6 @@
+# Version 0.0.3
+- Improve PCCIS support
+
 # Version 0.0.2
 - CodeLens for all tasks
 - CodeLens for long operations
