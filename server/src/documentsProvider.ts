@@ -1,5 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
+import * as _ from 'lodash'
 let fileUrl = require('file-url')
 let uriToPath = require('file-uri-to-path')
 
@@ -10,8 +11,20 @@ export class DocumentsProvider {
     }
 
     public getDocuments(): string[] {
-        const files = fs.readdirSync(this.workspaceRoot);
-        return files
+        const rootFiles = fs.readdirSync(this.workspaceRoot);
+
+        const filesInFolders = _(rootFiles)
+            .filter(filePath => {
+                const fullPath = path.join(this.workspaceRoot, filePath);
+                return fs.statSync(fullPath).isDirectory();
+            })
+            .flatMap(dir => {
+                const dirPath = path.join(this.workspaceRoot, dir);
+                return fs.readdirSync(dirPath).map(file => path.join(dir, file))
+            })
+            .value();
+
+        return _.union(rootFiles, filesInFolders)
             .filter(file => path.extname(file) === '.log')
             .map(file => path.join(this.workspaceRoot, file))
             .map(file => fileUrl(file));

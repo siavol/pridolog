@@ -36,6 +36,11 @@ export class CodeNavigator {
                 return null;
             }
 
+            if (serviceFile instanceof RegExp) {
+                // TODO: support this case
+                return null;
+            }
+
             const serviceLogUri = this.documentsProvider.getUriForRelativePath(serviceFile);
             const text = this.documentsProvider.getDocumentText(serviceLogUri);
 
@@ -61,25 +66,39 @@ export class CodeNavigator {
             if (reqLogItem.parent) {
                 const service = _.find(services, s => s.name === reqLogItem.parent.name);
                 if (service) {
-                    const serviceLogUri = this.documentsProvider.getUriForRelativePath(service.logFile);
-                    const text = this.documentsProvider.getDocumentText(serviceLogUri);
-
-                    const reqTime = Date.parse(reqLogItem.time);
-                    const logLines = parseTextLog(text);
-                    const defLogItem =  _(logLines)
-                        .filter(logLine => logLine.logItem.gid === reqLogItem.gid)
-                        .filter(logLine => logLine.logItem.reqBegin && logLine.logItem.req && logLine.logItem.req.path === reqLogItem.req.path)
-                        .filter(logLine => Date.parse(logLine.logItem.time) <= reqTime)
-                        .last();
-
-                    if (defLogItem) {
-                        return Location.create(serviceLogUri, Range.create(
-                            Position.create(defLogItem.line, 0),
-                            Position.create(defLogItem.line, defLogItem.source.length)
-                        ));
+                    let serviceLogUri: string[];
+                    const logFile = service.logFile;
+                    if (logFile instanceof RegExp) {
+                        serviceLogUri = this.documentsProvider.getDocuments()
+                            .filter(file => logFile.test(file));
+                        console.log(serviceLogUri);
                     } else {
-                        return null;
-                    }        
+                        const logFileUri = this.documentsProvider.getUriForRelativePath(logFile);
+                        serviceLogUri = [ logFileUri ];
+                    }
+
+                    for (let i = 0; i < serviceLogUri.length; i++) {
+                        const logFileUri = serviceLogUri[i];
+                        const text = this.documentsProvider.getDocumentText(logFileUri);
+
+                        const reqTime = Date.parse(reqLogItem.time);
+                        const logLines = parseTextLog(text);
+                        const defLogItem = _(logLines)
+                            .filter(logLine => logLine.logItem.gid === reqLogItem.gid)
+                            .filter(logLine => logLine.logItem.reqBegin)
+                            .filter(logLine => this.isSameRequest(logLine.logItem.req, reqLogItem.req))
+                            .filter(logLine => Date.parse(logLine.logItem.time) <= reqTime)
+                            .last();
+
+                        if (defLogItem) {
+                            return Location.create(logFileUri, Range.create(
+                                Position.create(defLogItem.line, 0),
+                                Position.create(defLogItem.line, defLogItem.source.length)
+                            ));
+                        }
+                    }
+
+                    return null;
                 }
             }
         }
@@ -87,7 +106,25 @@ export class CodeNavigator {
         return null;
     }
 
-    private getLogFileForRequest(/*method: string,*/ path: string): string {
+    private isSameRequest(req1: any, req2: any) {
+        if (!req1 || !req2) {
+            return false;
+        }
+        if (req1.method && req2.method && req1.method !== req2.method) {
+            return false;
+        }
+
+        const req1Parts = req1.path.split('?');
+        const req2Parts = req2.path.split('?');
+
+        if (req1Parts.length > 1 && req2Parts.length > 1) {
+            return req1.path === req2.path;
+        } else {
+            return req1Parts[0] === req2Parts[0];
+        }
+    }
+
+    private getLogFileForRequest(/*method: string,*/ path: string): string|RegExp {
         const serviceInfo = getServiceByRequestPath(path);
         return serviceInfo ? serviceInfo.logFile : null;
     }
