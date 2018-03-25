@@ -323,6 +323,63 @@ describe('CodeNavigator', () => {
                     });
                 });
             });
+
+            describe('should return location when log entry describes request pas -> plb -> pccis', () => {
+
+                it('for LoadBalancer log entry', () => {
+                    const logItem = { 
+                        "name": "LoadBalancer", 
+                        "hostname": "PTPcanaryUbuntu14CoreWin10ChromeJSP20180375095316316s13205451", 
+                        "pid": 2562, "taskid": 100, 
+                        "gid": "MPvux5kbwGfis8K47M9gVA", "level": 30, 
+                        "taskBegin": true, 
+                        "parent": { 
+                            "name": "PAS", 
+                            "pid": 3353, 
+                            "taskid": 22 
+                        }, 
+                        "reqAccepted": true, 
+                        "req": { 
+                            "method": "GET", 
+                            "path": "/PCCIS/V1/Page/q/0/Tile/0/1020/1028/260?DocumentID=ueiLcFo6dudAv59Bifi04Ku7-4_nrtVIGCED5UM8HiM2jSiol0ec9J3qx_1XNh3jU3wVbAIifKhSN06CdOarrRo8VzpiRlsdTV-bJccq-_gikwnvq0GoTIPfD-6PyOtj_i8PUHtRee3NI-iwBFZCrhA&Scale=1&Quality=100&ContentType=png", 
+                            "port": 3000 
+                        }, 
+                        "msg": "", "time": "2018-03-16T14:08:13.470Z", "v": 0 
+                    };
+                    const definition = codeNavigator.getDefinition(logItem);
+                    expect(definition).eql({
+                        uri: 'pas/pas-1.log',
+                        range: {
+                            start: { line: 1, character: 0 },
+                            end: { line: 1, character: 639 }
+                        }
+                    });
+                });
+
+                it('for PAS log entry', () => {
+                    const logItem = { 
+                        "name": "PAS", 
+                        "hostname": "PTPcanaryUbuntu14CoreWin10ChromeJSP20180375095316316s13205451", 
+                        "pid": 3353, "taskid": 22, "gid": "MPvux5kbwGfis8K47M9gVA", "level": 30, 
+                        "reqBegin": true, "operation": "proxyToPccis", 
+                        "req": { 
+                            "method": "GET", 
+                            "baseUrl": "http://localhost:18681", 
+                            "path": "/PCCIS/V1/Page/q/0/Tile/0/1020/1028/260", 
+                            "qs": { "DocumentID": "ueiLcFo6dudAv59Bifi04Ku7-4_nrtVIGCED5UM8HiM2jSiol0ec9J3qx_1XNh3jU3wVbAIifKhSN06CdOarrRo8VzpiRlsdTV-bJccq-_gikwnvq0GoTIPfD-6PyOtj_i8PUHtRee3NI-iwBFZCrhA", "Scale": "1", "Quality": "100", "ContentType": "png" } 
+                        }, 
+                        "timeline": "start", "msg": "", "time": "2018-03-16T14:08:13.469Z", "v": 0 
+                    };
+                    const definition = codeNavigator.getDefinition(logItem);
+                    expect(definition).eql({
+                        uri: 'Pccis2/ImagingServices.log',
+                        range: {
+                            start: { line: 6, character: 0 },
+                            end: { line: 6, character: 364 }
+                        }
+                    });
+                });
+            });
         });
     });
 

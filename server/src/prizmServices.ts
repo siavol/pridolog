@@ -136,11 +136,15 @@ const serviceDescriptions = {
     pccis: {
         name: 'PCCIS',
         logFile: /Pccis\d+\/.*/i,
-        requestPath: /\/PCCIS\/V1\/(Page|Document|ViewingSession).*/
+        requestPath: /\/PCCIS\/V1\/(Page|Document|ViewingSession).*/i
     },
     loadBalancer: {
         name: 'LoadBalancer',
         logFile: 'plb.sep_single.log'
+    },
+    pas: {
+        name: 'PAS',
+        logFile: /pas\/pas-\d+.log/i
     }
 };
 
