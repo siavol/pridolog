@@ -135,7 +135,7 @@ const serviceDescriptions = {
     },
     pccis: {
         name: 'PCCIS',
-        logFile: /Pccis\d+\/.*/i,
+        logFile: /Pccis\d+\/ImagingServices.log/i,
         requestPath: /\/PCCIS\/V1\/(Page|Document|ViewingSession).*/i
     },
     loadBalancer: {
