@@ -213,6 +213,62 @@ describe('CodeNavigator', () => {
                     });
                 });
             });
+
+            describe('should return location when log entry describes request pccis -> rcs', () => {
+
+                it('for PCCIS log entry', () => {
+                    const logItem = { 
+                        "time": "2018-03-16T14:08:12.948Z", 
+                        "gid": "5LWSCTeH9bzPB7HHGJI03A", 
+                        "name": "PCCIS", "level": 30, 
+                        "taskid": 59, "pid": 2418, "tid": 121, 
+                        "msg": "InternalRequest (RCS)", 
+                        "reqBegin": true, 
+                        "req": { 
+                            "method": "POST", 
+                            "path": "/documentAttributes", 
+                            "port": 19005 
+                        } 
+                    };
+                    const definition = codeNavigator.getDefinition(logItem);
+                    expect(definition).eql({
+                        uri: 'RasterConversionService.log',
+                        range: {
+                            start: { line: 0, character: 0 },
+                            end: { line: 0, character: 339 }
+                        }
+                    });
+                });
+
+                it('for RasterConversionService log entry', () => {
+                    const logItem = { 
+                        "gid": "5LWSCTeH9bzPB7HHGJI03A", 
+                        "name": "RCS", "time": "2018-03-16T14:08:12.950Z", 
+                        "pid": 2143, "level": 30, "tid": 2147, "taskid": 20, 
+                        "taskBegin": true, 
+                        "taskName": "Request", 
+                        "parent": { 
+                            "name": "PCCIS", 
+                            "pid": 2418, 
+                            "taskid": 59 
+                        }, 
+                        "reqAccepted": true, 
+                        "req": { 
+                            "method": "POST", 
+                            "port": 19005, 
+                            "path": "/RCS/documentAttributes" 
+                        } 
+                    };
+                    const definition = codeNavigator.getDefinition(logItem);
+                    expect(definition).eql({
+                        uri: 'Pccis2/ImagingServices.log',
+                        range: {
+                            start: { line: 2, character: 0 },
+                            end: { line: 2, character: 265 }
+                        }
+                    });
+                });
+            });
         });
     });
 
