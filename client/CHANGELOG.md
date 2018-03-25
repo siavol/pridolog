@@ -1,5 +1,6 @@
 # Version 0.0.3
 - Improve PCCIS support
+- Improve PAS support
 
 # Version 0.0.2
 - CodeLens for all tasks

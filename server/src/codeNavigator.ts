@@ -30,36 +30,38 @@ export class CodeNavigator {
 
     public getDefinition(reqLogItem: any): Location {
         if (reqLogItem.reqBegin) {
-            const request = reqLogItem.req;
-            const serviceFile = this.getLogFileForRequest(/*request.method,*/ request.path);
+            const serviceFile = this.getLogFileForRequest(reqLogItem);
             if (!serviceFile) {
                 return null;
             }
 
+            let serviceLogUri: string[];
             if (serviceFile instanceof RegExp) {
-                // TODO: support this case
-                return null;
+                serviceLogUri = this.documentsProvider.getDocuments()
+                    .filter(file => serviceFile.test(file));
+            } else {
+                serviceLogUri = [ this.documentsProvider.getUriForRelativePath(serviceFile) ];
             }
 
-            const serviceLogUri = this.documentsProvider.getUriForRelativePath(serviceFile);
-            const text = this.documentsProvider.getDocumentText(serviceLogUri);
+            for (let i = 0; i < serviceLogUri.length; i++) {
+                const logFileUri = serviceLogUri[i];
+                const text = this.documentsProvider.getDocumentText(logFileUri);
 
-            const reqTime = Date.parse(reqLogItem.time);
-            const logLines = parseTextLog(text);
-            const defLogItem = _(logLines)
-                .filter(logLine => logLine.logItem.gid === reqLogItem.gid)
-                .filter(logLine => logLine.logItem.reqAccepted)
-                .filter(logLine => Date.parse(logLine.logItem.time) >= reqTime)
-                .first();
+                const reqTime = Date.parse(reqLogItem.time);
+                const logLines = parseTextLog(text);
+                const defLogItem = _(logLines)
+                    .filter(logLine => logLine.logItem.gid === reqLogItem.gid)
+                    .filter(logLine => logLine.logItem.reqAccepted)
+                    .filter(logLine => Date.parse(logLine.logItem.time) >= reqTime)
+                    .first();
 
-            if (defLogItem) {
-                return Location.create(serviceLogUri, Range.create(
-                    Position.create(defLogItem.line, 0),
-                    Position.create(defLogItem.line, defLogItem.source.length)
-                ));
-            } else {
-                return null;
-            }        
+                if (defLogItem) {
+                    return Location.create(logFileUri, Range.create(
+                        Position.create(defLogItem.line, 0),
+                        Position.create(defLogItem.line, defLogItem.source.length)
+                    ));
+                }        
+            }
         }
 
         if (reqLogItem.reqAccepted) {
@@ -71,7 +73,6 @@ export class CodeNavigator {
                     if (logFile instanceof RegExp) {
                         serviceLogUri = this.documentsProvider.getDocuments()
                             .filter(file => logFile.test(file));
-                        console.log(serviceLogUri);
                     } else {
                         const logFileUri = this.documentsProvider.getUriForRelativePath(logFile);
                         serviceLogUri = [ logFileUri ];
@@ -86,7 +87,7 @@ export class CodeNavigator {
                         const defLogItem = _(logLines)
                             .filter(logLine => logLine.logItem.gid === reqLogItem.gid)
                             .filter(logLine => logLine.logItem.reqBegin)
-                            .filter(logLine => this.isSameRequest(logLine.logItem.req, reqLogItem.req))
+                            .filter(logLine => this.isSameRequest(logLine.logItem, reqLogItem))
                             .filter(logLine => Date.parse(logLine.logItem.time) <= reqTime)
                             .last();
 
@@ -106,25 +107,54 @@ export class CodeNavigator {
         return null;
     }
 
-    private isSameRequest(req1: any, req2: any) {
-        if (!req1 || !req2) {
-            return false;
-        }
-        if (req1.method && req2.method && req1.method !== req2.method) {
+    private isSameRequest(logItem1: any, logItem2: any) {
+        if (!logItem1 || !logItem2 || !logItem1.req || !logItem2.req) {
             return false;
         }
 
-        const req1Parts = req1.path.split('?');
-        const req2Parts = req2.path.split('?');
+        if (logItem1.req.method && logItem2.req.method 
+            && logItem1.req.method !== logItem2.req.method) {
+            return false;
+        }
+
+        const path1 = this.getLogItemReqPath(logItem1);
+        const path2 = this.getLogItemReqPath(logItem1);
+        const req1Parts = path1.split('?');
+        const req2Parts = path2.split('?');
 
         if (req1Parts.length > 1 && req2Parts.length > 1) {
-            return req1.path === req2.path;
+            return path1 === path2;
         } else {
             return req1Parts[0] === req2Parts[0];
         }
     }
 
-    private getLogFileForRequest(/*method: string,*/ path: string): string|RegExp {
+    private getLogItemReqPath(logItem: any): string {
+        const request = logItem.req;
+        let path: string;
+        if (request.path) {
+            path = request.path;
+        } else if (request.url) {
+            const url = /(http|https):\/\/localhost:\d+(.*)/.exec(request.url);
+            if (url) {
+                path = url[2];
+            }
+        } else {
+            return null;
+        }
+
+        if (logItem.name === 'PCCIS') {
+            const requestedService = /InternalRequest \((.*)\)/.exec(logItem.msg);
+            if (requestedService) {
+                path = `/${requestedService[1]}${path}`;
+            }
+        }
+
+        return path;
+    }
+
+    private getLogFileForRequest(logItem: any): string|RegExp {
+        let path = this.getLogItemReqPath(logItem);
         const serviceInfo = getServiceByRequestPath(path);
         return serviceInfo ? serviceInfo.logFile : null;
     }
