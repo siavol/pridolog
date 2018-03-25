@@ -29,36 +29,39 @@ export class CodeNavigator {
     }
 
     public getDefinition(reqLogItem: any): Location {
-        if (reqLogItem.reqBegin) {            
-            const serviceFile = this.getLogFileForRequest(reqLogItem/*request.method, request.path*/);
+        if (reqLogItem.reqBegin) {
+            const serviceFile = this.getLogFileForRequest(reqLogItem);
             if (!serviceFile) {
                 return null;
             }
 
+            let serviceLogUri: string[];
             if (serviceFile instanceof RegExp) {
-                // TODO: support this case
-                return null;
+                serviceLogUri = this.documentsProvider.getDocuments()
+                    .filter(file => serviceFile.test(file));
+            } else {
+                serviceLogUri = [ this.documentsProvider.getUriForRelativePath(serviceFile) ];
             }
 
-            const serviceLogUri = this.documentsProvider.getUriForRelativePath(serviceFile);
-            const text = this.documentsProvider.getDocumentText(serviceLogUri);
+            for (let i = 0; i < serviceLogUri.length; i++) {
+                const logFileUri = serviceLogUri[i];
+                const text = this.documentsProvider.getDocumentText(logFileUri);
 
-            const reqTime = Date.parse(reqLogItem.time);
-            const logLines = parseTextLog(text);
-            const defLogItem = _(logLines)
-                .filter(logLine => logLine.logItem.gid === reqLogItem.gid)
-                .filter(logLine => logLine.logItem.reqAccepted)
-                .filter(logLine => Date.parse(logLine.logItem.time) >= reqTime)
-                .first();
+                const reqTime = Date.parse(reqLogItem.time);
+                const logLines = parseTextLog(text);
+                const defLogItem = _(logLines)
+                    .filter(logLine => logLine.logItem.gid === reqLogItem.gid)
+                    .filter(logLine => logLine.logItem.reqAccepted)
+                    .filter(logLine => Date.parse(logLine.logItem.time) >= reqTime)
+                    .first();
 
-            if (defLogItem) {
-                return Location.create(serviceLogUri, Range.create(
-                    Position.create(defLogItem.line, 0),
-                    Position.create(defLogItem.line, defLogItem.source.length)
-                ));
-            } else {
-                return null;
-            }        
+                if (defLogItem) {
+                    return Location.create(logFileUri, Range.create(
+                        Position.create(defLogItem.line, 0),
+                        Position.create(defLogItem.line, defLogItem.source.length)
+                    ));
+                }        
+            }
         }
 
         if (reqLogItem.reqAccepted) {
@@ -128,7 +131,17 @@ export class CodeNavigator {
 
     private getLogItemReqPath(logItem: any): string {
         const request = logItem.req;
-        let path = request.path;
+        let path: string;
+        if (request.path) {
+            path = request.path;
+        } else if (request.url) {
+            const url = /(http|https):\/\/localhost:\d+(.*)/.exec(request.url);
+            if (url) {
+                path = url[2];
+            }
+        } else {
+            return null;
+        }
 
         if (logItem.name === 'PCCIS') {
             const requestedService = /InternalRequest \((.*)\)/.exec(logItem.msg);

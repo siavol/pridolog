@@ -269,6 +269,60 @@ describe('CodeNavigator', () => {
                     });
                 });
             });
+
+            describe('should return location when log entry describes request plb -> pccis', () => {
+
+                it('for LoadBalancer log entry', () => {
+                    const logItem = { 
+                        "name": "LoadBalancer", 
+                        "hostname": "PTPcanaryUbuntu14CoreWin10ChromeJSP20180375095316316s13205451", 
+                        "pid": 2562, "taskid": 100, "gid": "MPvux5kbwGfis8K47M9gVA", "level": 30, 
+                        "reqBegin": true, 
+                        "req": { 
+                            "method": "GET", 
+                            "url": "http://localhost:19002/PCCIS/V1/Page/q/0/Tile/0/1020/1028/260?DocumentID=ueiLcFo6dudAv59Bifi04Ku7-4_nrtVIGCED5UM8HiM2jSiol0ec9J3qx_1XNh3jU3wVbAIifKhSN06CdOarrRo8VzpiRlsdTV-bJccq-_gikwnvq0GoTIPfD-6PyOtj_i8PUHtRee3NI-iwBFZCrhA&Scale=1&ContentType=png&Quality=100" 
+                        }, 
+                        "msg": "", 
+                        "time": "2018-03-16T14:08:13.470Z", "v": 0 
+                    };
+                    const definition = codeNavigator.getDefinition(logItem);
+                    expect(definition).eql({
+                        uri: 'Pccis2/ImagingServices.log',
+                        range: {
+                            start: { line: 6, character: 0 },
+                            end: { line: 6, character: 364 }
+                        }
+                    });
+                });
+
+                it('for PCCIS log entry', () => {
+                    const logItem = { 
+                        "time": "2018-03-16T14:08:13.471Z", "gid": "MPvux5kbwGfis8K47M9gVA", 
+                        "name": "PCCIS", "level": 30, "taskid": 66, "pid": 2418, "tid": 87, 
+                        "msg": "ProcessRequest", 
+                        "taskBegin": true, 
+                        "parent": { 
+                            "name": "LoadBalancer", 
+                            "pid": 2562, 
+                            "taskid": 100 
+                        }, 
+                        "reqAccepted": true, 
+                        "req": { 
+                            "method": "GET", 
+                            "path": "/PCCIS/V1/Page/q/0/Tile/0/1020/1028/260", 
+                            "port": 19002 
+                        } 
+                    };
+                    const definition = codeNavigator.getDefinition(logItem);
+                    expect(definition).eql({
+                        uri: 'plb.sep_single.log',
+                        range: {
+                            start: { line: 3, character: 0 },
+                            end: { line: 3, character: 549 }
+                        }
+                    });
+                });
+            });
         });
     });
 
