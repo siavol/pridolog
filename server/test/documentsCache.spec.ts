@@ -113,11 +113,11 @@ describe('DocumentsCache', () => {
 
             cache.set('test_uri_1', {
                 lines: [uri1_logLine],
-                longOperations: [{logLine: uri1_logLine, durationMs: 123}]
+                longOperations: [{logLine: uri1_logLine, nextLine: uri1_logLine, durationMs: 123}]
             });
             cache.set('test_uri_2', {
                 lines: [uri2_logLine],
-                longOperations: [{ logLine: uri2_logLine, durationMs: 456 }]
+                longOperations: [{ logLine: uri2_logLine, nextLine: uri2_logLine, durationMs: 456 }]
             });
         });
 
