@@ -2,7 +2,10 @@
 
 import * as path from 'path';
 
-import { workspace, window, ExtensionContext, commands, TextEditor, TextEditorEdit, Selection } from 'vscode';
+import {
+	workspace, window,
+	ExtensionContext, commands, TextEditor, TextEditorEdit, 
+	Selection } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
 
 export function activate(context: ExtensionContext) {

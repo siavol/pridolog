@@ -3,8 +3,7 @@
 import * as _ from 'lodash'
 import {
 	IPCMessageReader, IPCMessageWriter, createConnection, IConnection, TextDocuments,
-	InitializeResult, TextDocumentPositionParams, CompletionItem, 
-	CompletionItemKind,
+	InitializeResult, TextDocumentPositionParams,
 	ReferenceParams,
 	Location, Range, Position,
 	CodeLensParams, CodeLens,
@@ -15,6 +14,8 @@ import { getTextLines } from './textLog'
 import { DocumentsProvider } from './documentsProvider'
 import { CodeNavigator } from './codeNavigator'
 import { findLogProblems } from './diagnostics'
+import { durationFormat } from './time'
+import { DocumentsCache } from './documentsCache';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -30,6 +31,7 @@ documents.listen(connection);
 // in the passed params the rootPath of the workspace plus the client capabilities. 
 let workspaceRoot: string;
 let documentsProvider: DocumentsProvider;
+let documentsCache: DocumentsCache;
 let codeNavigator: CodeNavigator;
 connection.onInitialize((params): InitializeResult => {
 	workspaceRoot = params.rootPath;
@@ -37,16 +39,13 @@ connection.onInitialize((params): InitializeResult => {
 	// connection.console.log(`Text document sync is FULL: ${documents.syncKind === TextDocumentSyncKind.Full}`);
 
 	documentsProvider = new DocumentsProvider(workspaceRoot, documents);
-	codeNavigator = new CodeNavigator(documentsProvider);
+	documentsCache = new DocumentsCache();
+	codeNavigator = new CodeNavigator(documentsProvider, documentsCache);
 
 	return {
 		capabilities: {
 			// Tell the client that the server works in FULL text document sync mode
 			textDocumentSync: documents.syncKind,
-			// Tell the client that the server support code complete
-			completionProvider: {
-				resolveProvider: true
-			},
 			referencesProvider: true,
 			definitionProvider: true,
 			codeLensProvider: {
@@ -90,13 +89,17 @@ connection.onInitialize((params): InitializeResult => {
 /*
 connection.onDidChangeConfiguration((change) => {
 	let settings = <Settings>change.settings;
-	if (settings.pridolog 
-		&& settings.pridolog.showLongOperations
-		&& settings.pridolog.showLongOperations.enabled) {
-		
-		longOperationDurationMs = settings.pridolog.showLongOperations.durationInMs || 1000;
-	} else {
-		longOperationDurationMs = -1;
+
+	if (!settings.pridolog) {
+		return;
+	}
+
+	if (!_.isNil(settings.pridolog.showLongOperations)) {
+		longOperationDurationMs = settings.pridolog.showLongOperations.enabled
+			? settings.pridolog.showLongOperations.durationInMs
+			: -1;
+
+		documentsCache.dropProperty('longOperations');
 	}
 });
 */
@@ -109,39 +112,6 @@ function validateTextDocument(documentText: string, documentUri: string): void {
 connection.onDidChangeWatchedFiles((_change) => {
 	// Monitored files have change in VSCode
 	connection.console.log('We received an file change event');
-});
-
-
-// This handler provides the initial list of the completion items.
-connection.onCompletion((_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-	// The pass parameter contains the position of the text document in 
-	// which code complete got requested. For the example we ignore this
-	// info and always provide the same completion items.
-	return [
-		{
-			label: 'TypeScript',
-			kind: CompletionItemKind.Text,
-			data: 1
-		},
-		{
-			label: 'JavaScript',
-			kind: CompletionItemKind.Text,
-			data: 2
-		}
-	]
-});
-
-// This handler resolve additional information for the item selected in
-// the completion list.
-connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
-	if (item.data === 1) {
-		item.detail = 'TypeScript details',
-			item.documentation = 'TypeScript documentation'
-	} else if (item.data === 2) {
-		item.detail = 'JavaScript details',
-			item.documentation = 'JavaScript documentation'
-	}
-	return item;
 });
 
 connection.onDidOpenTextDocument((params) => {
@@ -194,9 +164,9 @@ connection.onDefinition((params: TextDocumentPositionParams): Location => {
 //
 
 connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
-	
+
 	const tasks = codeNavigator.getTasksFromTheLogFile(params.textDocument.uri);
-	return _(tasks)
+	let codeLenses = _(tasks)
 		.filter(t => t.taskBegin && t.taskEnd)
 		.map(t => {
 			const beginLogItem = t.taskBegin.logItem;
@@ -210,13 +180,31 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
 			const beginTime = Date.parse(beginLogItem.time);
 			const endTime = Date.parse(t.taskEnd.logItem.time);
 			const timeSpend = new Date(endTime - beginTime);
-			const lensTitle = `Task completed in ${timeSpend.getMilliseconds()}ms`
-			taskEndLens.command = Command.create(lensTitle, 'pridolog.revealLine', 
-				{ lineNumber: t.taskEnd.line });
+			const lensTitle = `Task completed in ${durationFormat(timeSpend)}`
+			taskEndLens.command = Command.create(lensTitle, 
+				'pridolog.revealLine', { lineNumber: t.taskEnd.line });
 			return [taskBeginLens, taskEndLens];
 		})
 		.flatten()
 		.value()
+
+	if (longOperationDurationMs > 0) {
+		const longOperations = codeNavigator.getOperationsLongerThan(
+			params.textDocument.uri, longOperationDurationMs);
+		const longOperationsLenses = longOperations.map(operation => {
+			const range = Range.create(
+				Position.create(operation.logLine.line, 0),
+				Position.create(operation.logLine.line, operation.logLine.source.length)
+			);
+			const lens = CodeLens.create(range, operation);
+			lens.command = Command.create(`Operation duration: ${durationFormat(operation.durationMs)}`, 
+				'pridolog.revealLine', { lineNumber: operation.nextLine.line });
+			return lens;
+		});
+		codeLenses = _.union(codeLenses, longOperationsLenses);
+	}
+
+	return codeLenses;
 });
 
 connection.onCodeLensResolve((lens: CodeLens): CodeLens => {

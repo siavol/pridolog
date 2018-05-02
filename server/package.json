@@ -1,7 +1,7 @@
 {
 	"name": "pridolog",
 	"description": "Implementation of a PrizmDoc log language server.",
-	"version": "0.0.1",
+	"version": "0.0.4",
 	"author": "Ilya Shestakov",
 	"license": "MIT",
 	"engines": {
@@ -16,7 +16,7 @@
 		"file-url": "^2.0.2",
 		"json-to-ast": "^2.0.2",
 		"lodash": "^4.17.4",
-		"vscode-languageserver": "^3.4.2"
+		"vscode-languageserver": "^4.1.2"
 	},
 	"scripts": {
 		"installServer": "installServerIntoExtension ../client ./package.json ./tsconfig.json",
