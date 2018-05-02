@@ -155,7 +155,7 @@ connection.onDefinition((params: TextDocumentPositionParams): Location => {
 //
 
 connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
-	
+
 	const tasks = codeNavigator.getTasksFromTheLogFile(params.textDocument.uri);
 	let codeLenses = _(tasks)
 		.filter(t => t.taskBegin && t.taskEnd)
@@ -180,8 +180,9 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
 		.value()
 
 	if (longOperationDurationMs > 0) {
-		const longOperationsLenses = codeNavigator.getOperationsLongerThan(
-			params.textDocument.uri, longOperationDurationMs)
+		const longOperations = codeNavigator.getOperationsLongerThan(
+			params.textDocument.uri, longOperationDurationMs);
+		const longOperationsLenses = longOperations
 			.map(operation => {
 				const range = Range.create(
 					Position.create(operation.logLine.line, 0),

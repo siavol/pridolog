@@ -79,12 +79,15 @@ describe('DocumentsCache', () => {
             expect(cache.get('no_such_uri')).to.be.undefined;
         });
 
-        it('returns container copy', () => {
+        it('returns container shallow clone', () => {
             const container1 = cache.get('test_uri');
             const container2 = cache.get('test_uri');
-            container1.lines[0].line = 10;
-
+            
+            container1.longOperations = [];
             expect(container1).not.eql(container2);
+            
+            container1.lines[0].line = 10;
+            expect(container1.lines).eql(container2.lines);
         });
     });
 });
