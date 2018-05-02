@@ -3,6 +3,7 @@ import { Location, Range, Position } from 'vscode-languageserver'
 import { DocumentsProvider } from './documentsProvider'
 import { parseTextLog, ILogLine } from './textLog'
 import { services, getServiceByRequestPath } from './prizmServices'
+import { DocumentsCache } from './documentsCache';
 
 export interface ILogTask {
     taskBegin: ILogLine;
@@ -15,13 +16,27 @@ export interface ILogOperationDuration {
 }
 
 export class CodeNavigator {
-    constructor(private readonly documentsProvider: DocumentsProvider) { }
+    constructor(
+        private readonly documentsProvider: DocumentsProvider,
+        private readonly documentsCache: DocumentsCache) { }
+
+    private getLogLines(uri: string): ILogLine[] {
+        let cachedDocument = this.documentsCache.get(uri);
+        if (cachedDocument && cachedDocument.lines) {
+            return cachedDocument.lines;
+        } else {
+            const text = this.documentsProvider.getDocumentText(uri);
+            const logLines = parseTextLog(text);
+            this.documentsCache.set(uri, { lines: logLines });
+            return logLines;
+        }
+    }
 
     public findAllEntriesForGid(gid: string): Location[] {
         const logFiles = this.documentsProvider.getDocuments();
         let result = _(logFiles)
-            .map(file => ({ uri: file, text: this.documentsProvider.getDocumentText(file) }))
-            .flatMap(file => parseTextLog(file.text).map(line => ({uri: file.uri, text:line.source, line: line.line, logItem:line.logItem})))
+            .map(file => ({ uri: file, lines: this.getLogLines(file) }))
+            .flatMap(file => file.lines.map(line => ({uri: file.uri, text:line.source, line: line.line, logItem:line.logItem})))
             .filter(item => item.logItem.gid === gid)
             .map(item => ({ uri: item.uri, range: Range.create(item.line, 0, item.line, item.text.length-1) }))
             .value();
@@ -45,10 +60,9 @@ export class CodeNavigator {
 
             for (let i = 0; i < serviceLogUri.length; i++) {
                 const logFileUri = serviceLogUri[i];
-                const text = this.documentsProvider.getDocumentText(logFileUri);
+                const logLines = this.getLogLines(logFileUri);
 
                 const reqTime = Date.parse(reqLogItem.time);
-                const logLines = parseTextLog(text);
                 const defLogItem = _(logLines)
                     .filter(logLine => logLine.logItem.gid === reqLogItem.gid)
                     .filter(logLine => logLine.logItem.reqAccepted)
@@ -80,10 +94,9 @@ export class CodeNavigator {
 
                     for (let i = 0; i < serviceLogUri.length; i++) {
                         const logFileUri = serviceLogUri[i];
-                        const text = this.documentsProvider.getDocumentText(logFileUri);
+                        const logLines = this.getLogLines(logFileUri);
 
                         const reqTime = Date.parse(reqLogItem.time);
-                        const logLines = parseTextLog(text);
                         const defLogItem = _(logLines)
                             .filter(logLine => logLine.logItem.gid === reqLogItem.gid)
                             .filter(logLine => logLine.logItem.reqBegin)
@@ -164,51 +177,62 @@ export class CodeNavigator {
     }
 
     public getTasksFromTheLogFile(uri: string): ILogTask[] {
-        const text = this.documentsProvider.getDocumentText(uri);
-        const logLines = parseTextLog(text);
+        const cachedDocument = this.documentsCache.get(uri);
+        if (cachedDocument && cachedDocument.tasks) {
+            return cachedDocument.tasks;
+        } else {
+            const logLines = this.getLogLines(uri);
 
-        let tasksMap = new Map<string, ILogTask>();
+            let tasksMap = new Map<string, ILogTask>();
 
-        logLines.forEach(logLine => {
-            if (logLine.logItem.taskBegin) {
-                const task = {
-                    taskBegin: logLine,
-                    taskEnd: null as ILogLine
-                };
-                
-                tasksMap.set(this.getTaskKey(logLine.logItem), task);
-            } else if (logLine.logItem.taskEnd) {
-                const task = tasksMap.get(this.getTaskKey(logLine.logItem));
-                if (task) {
-                    task.taskEnd = logLine;
+            logLines.forEach(logLine => {
+                if (logLine.logItem.taskBegin) {
+                    const task = {
+                        taskBegin: logLine,
+                        taskEnd: null as ILogLine
+                    };
+
+                    tasksMap.set(this.getTaskKey(logLine.logItem), task);
+                } else if (logLine.logItem.taskEnd) {
+                    const task = tasksMap.get(this.getTaskKey(logLine.logItem));
+                    if (task) {
+                        task.taskEnd = logLine;
+                    }
                 }
-            }
-        });
+            });
 
-        return Array.from(tasksMap.values());
+            const tasks = Array.from(tasksMap.values());
+            this.documentsCache.set(uri, { tasks });
+            return tasks;
+        }
     }
 
     public getOperationsLongerThan(uri: string, minDuration: number): ILogOperationDuration[] {
-        const text = this.documentsProvider.getDocumentText(uri);
-        const logLines = parseTextLog(text);
+        const cachedDocument = this.documentsCache.get(uri);
+        if (cachedDocument && cachedDocument.longOperations) {
+            return cachedDocument.longOperations;
+        } else {
+            const logLines = this.getLogLines(uri);
 
-        let lastTaskLineMap = new Map<string, ILogLine>();
-        let result = [] as ILogOperationDuration[];
+            let lastTaskLineMap = new Map<string, ILogLine>();
+            let result = [] as ILogOperationDuration[];
 
-        logLines.forEach(logLine => {
-            const key = this.getTaskKey(logLine.logItem);
-            const prevLogLine = lastTaskLineMap.get(key);
-            if (prevLogLine) {
-                const prevTime = Date.parse(prevLogLine.logItem.time);
-                const thisTime = Date.parse(logLine.logItem.time);
-                const durationMs = thisTime - prevTime;
-                if (durationMs > minDuration) {
-                    result.push({ logLine: prevLogLine, durationMs });
+            logLines.forEach(logLine => {
+                const key = this.getTaskKey(logLine.logItem);
+                const prevLogLine = lastTaskLineMap.get(key);
+                if (prevLogLine) {
+                    const prevTime = Date.parse(prevLogLine.logItem.time);
+                    const thisTime = Date.parse(logLine.logItem.time);
+                    const durationMs = thisTime - prevTime;
+                    if (durationMs > minDuration) {
+                        result.push({ logLine: prevLogLine, durationMs });
+                    }
                 }
-            }
-            lastTaskLineMap.set(key, logLine);
-        });
+                lastTaskLineMap.set(key, logLine);
+            });
 
-        return result;
+            this.documentsCache.set(uri, { longOperations: result });
+            return result;
+        }
     }
 }

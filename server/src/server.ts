@@ -14,6 +14,7 @@ import { DocumentsProvider } from './documentsProvider'
 import { CodeNavigator } from './codeNavigator'
 import { findLogProblems } from './diagnostics'
 import { durationFormat } from './time'
+import { DocumentsCache } from './documentsCache';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -29,6 +30,7 @@ documents.listen(connection);
 // in the passed params the rootPath of the workspace plus the client capabilities. 
 let workspaceRoot: string;
 let documentsProvider: DocumentsProvider;
+let documentsCache: DocumentsCache;
 let codeNavigator: CodeNavigator;
 connection.onInitialize((params): InitializeResult => {
 	workspaceRoot = params.rootPath;
@@ -36,7 +38,8 @@ connection.onInitialize((params): InitializeResult => {
 	// connection.console.log(`Text document sync is FULL: ${documents.syncKind === TextDocumentSyncKind.Full}`);
 
 	documentsProvider = new DocumentsProvider(workspaceRoot, documents);
-	codeNavigator = new CodeNavigator(documentsProvider);
+	documentsCache = new DocumentsCache();
+	codeNavigator = new CodeNavigator(documentsProvider, documentsCache);
 
 	return {
 		capabilities: {
@@ -81,13 +84,17 @@ let longOperationDurationMs: number = -1;
 // as well.
 connection.onDidChangeConfiguration((change) => {
 	let settings = <Settings>change.settings;
-	if (settings.pridolog 
-		&& settings.pridolog.showLongOperations
-		&& settings.pridolog.showLongOperations.enabled) {
-		
-		longOperationDurationMs = settings.pridolog.showLongOperations.durationInMs;
-	} else {
-		longOperationDurationMs = -1;
+
+	if (!settings.pridolog) {
+		return;
+	}
+
+	if (!_.isNil(settings.pridolog.showLongOperations)) {
+		longOperationDurationMs = settings.pridolog.showLongOperations.enabled
+			? settings.pridolog.showLongOperations.durationInMs
+			: -1;
+
+		documentsCache.dropProperty('longOperations');
 	}
 });
 
@@ -152,7 +159,7 @@ connection.onDefinition((params: TextDocumentPositionParams): Location => {
 //
 
 connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
-	
+
 	const tasks = codeNavigator.getTasksFromTheLogFile(params.textDocument.uri);
 	let codeLenses = _(tasks)
 		.filter(t => t.taskBegin && t.taskEnd)
@@ -177,8 +184,9 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
 		.value()
 
 	if (longOperationDurationMs > 0) {
-		const longOperationsLenses = codeNavigator.getOperationsLongerThan(
-			params.textDocument.uri, longOperationDurationMs)
+		const longOperations = codeNavigator.getOperationsLongerThan(
+			params.textDocument.uri, longOperationDurationMs);
+		const longOperationsLenses = longOperations
 			.map(operation => {
 				const range = Range.create(
 					Position.create(operation.logLine.line, 0),
