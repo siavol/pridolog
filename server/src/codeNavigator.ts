@@ -12,6 +12,7 @@ export interface ILogTask {
 
 export interface ILogOperationDuration {
     logLine: ILogLine;
+    nextLine: ILogLine;
     durationMs: number;
 }
 
@@ -225,7 +226,11 @@ export class CodeNavigator {
                     const thisTime = Date.parse(logLine.logItem.time);
                     const durationMs = thisTime - prevTime;
                     if (durationMs > minDuration) {
-                        result.push({ logLine: prevLogLine, durationMs });
+                        result.push({ 
+                            logLine: prevLogLine,
+                            nextLine: logLine,
+                            durationMs
+                        });
                     }
                 }
                 lastTaskLineMap.set(key, logLine);

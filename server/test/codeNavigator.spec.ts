@@ -526,6 +526,7 @@ describe('CodeNavigator', () => {
             expect(operations).eql([
                 {
                     logLine: logLines[2],
+                    nextLine: logLines[4],
                     durationMs: 169
                 }
             ])
@@ -545,7 +546,7 @@ describe('CodeNavigator', () => {
                 const logLines = parseTextLog(logText);
 
                 documentsCache.set('OCS.log', {
-                    longOperations: [{ logLine: logLines[1], durationMs: 321 }]
+                    longOperations: [{ logLine: logLines[1], nextLine: logLines[2], durationMs: 321 }]
                 });
             });
 
@@ -557,7 +558,8 @@ describe('CodeNavigator', () => {
 
                 expect(operations).eql([
                     {
-                        logLine: logLines[1], 
+                        logLine: logLines[1],
+                        nextLine: logLines[2],
                         durationMs: 321
                     }
                 ]);

@@ -176,8 +176,8 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
 			const endTime = Date.parse(t.taskEnd.logItem.time);
 			const timeSpend = new Date(endTime - beginTime);
 			const lensTitle = `Task completed in ${durationFormat(timeSpend)}`
-			taskEndLens.command = Command.create(lensTitle, 'pridolog.revealLine', 
-				{ lineNumber: t.taskEnd.line });
+			taskEndLens.command = Command.create(lensTitle, 
+				'pridolog.revealLine', { lineNumber: t.taskEnd.line });
 			return [taskBeginLens, taskEndLens];
 		})
 		.flatten()
@@ -186,16 +186,16 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
 	if (longOperationDurationMs > 0) {
 		const longOperations = codeNavigator.getOperationsLongerThan(
 			params.textDocument.uri, longOperationDurationMs);
-		const longOperationsLenses = longOperations
-			.map(operation => {
-				const range = Range.create(
-					Position.create(operation.logLine.line, 0),
-					Position.create(operation.logLine.line, operation.logLine.source.length)
-				);
-				const lens = CodeLens.create(range, operation);
-				lens.command = Command.create(`Operation duration: ${durationFormat(operation.durationMs)}`, null);
-				return lens;
-			});
+		const longOperationsLenses = longOperations.map(operation => {
+			const range = Range.create(
+				Position.create(operation.logLine.line, 0),
+				Position.create(operation.logLine.line, operation.logLine.source.length)
+			);
+			const lens = CodeLens.create(range, operation);
+			lens.command = Command.create(`Operation duration: ${durationFormat(operation.durationMs)}`, 
+				'pridolog.revealLine', { lineNumber: operation.nextLine.line });
+			return lens;
+		});
 		codeLenses = _.union(codeLenses, longOperationsLenses);
 	}
 
