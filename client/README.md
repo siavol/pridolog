@@ -5,6 +5,10 @@
 
 ## Usage
 
+### Commands
+
+* `Show operation duration` - shows the duration of the operation in cursor position. It's time between current log entry and the next one with the same *gid* and *taskid*.
+
 ### Problems
 
 Shows first 250 (VS Code hardcoded limit) errors and warnings in the log file.

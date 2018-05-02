@@ -16,6 +16,10 @@ export function durationFormat(timeSpan: Date | number): string {
         durationMs = timeSpan;
     }
 
+    if (durationMs === 0) {
+        return `0 ${_.last(timeParts).name[1]}`;
+    }
+
     const resultPart = [] as {timePartIndex: number; str: string}[];
     const isPartsEnough = (i: number) => {
         if (resultPart.length === 0) {

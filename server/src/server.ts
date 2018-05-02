@@ -7,7 +7,7 @@ import {
 	ReferenceParams,
 	Location, Range, Position,
 	CodeLensParams, CodeLens,
-	Command
+	Command, ExecuteCommandParams
 } from 'vscode-languageserver';
 import { getTextLines } from './textLog'
 import { DocumentsProvider } from './documentsProvider'
@@ -49,6 +49,9 @@ connection.onInitialize((params): InitializeResult => {
 			definitionProvider: true,
 			codeLensProvider: {
 				resolveProvider: true
+			},
+			executeCommandProvider: {
+				commands: [ 'pridolog.serverGetOperationDuration' ]
 			}
 		}
 	}
@@ -97,7 +100,6 @@ connection.onDidChangeConfiguration((change) => {
 		documentsCache.dropProperty('longOperations');
 	}
 });
-
 
 function validateTextDocument(documentText: string, documentUri: string): void {
 	const diagnostics = findLogProblems(documentText);
@@ -204,6 +206,21 @@ connection.onCodeLens((params: CodeLensParams): CodeLens[] => {
 
 connection.onCodeLensResolve((lens: CodeLens): CodeLens => {
 	return lens;
+});
+
+connection.onExecuteCommand((params: ExecuteCommandParams): any => {
+	connection.console.log(JSON.stringify(params));
+	switch (params.command) {
+		case 'pridolog.serverGetOperationDuration':
+			const documentUri = params.arguments[0];
+			const lineNumber = params.arguments[1];
+			const duration = codeNavigator.getOperationDuration(documentUri, lineNumber);
+			return duration 
+				? { durationMs: duration.durationMs, durationFormatted: durationFormat(duration.durationMs) } 
+				: null;
+		default:
+			return undefined;
+	}
 });
 
 // Listen on the connection

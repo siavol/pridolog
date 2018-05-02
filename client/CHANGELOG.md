@@ -1,4 +1,5 @@
 # Version 0.0.4
+- Added "Show operation duration" command
 
 # Version 0.0.3
 - Improve PCCIS support

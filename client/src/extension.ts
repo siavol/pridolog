@@ -3,7 +3,7 @@
 import * as path from 'path';
 
 import {
-	workspace, //window,
+	workspace, window,
 	ExtensionContext, commands, TextEditor, TextEditorEdit, 
 	Selection } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
@@ -35,22 +35,31 @@ export function activate(context: ExtensionContext) {
 	}
 	
 	// Create the language client and start the client.
-	let disposable = new LanguageClient('pridolog', 'PrizmDoc logs Server', serverOptions, clientOptions).start();
-	
+	const languageClient = new LanguageClient('pridolog', 'PrizmDoc logs Server', serverOptions, clientOptions);
+	let disposable = languageClient.start();	
 	// Push the disposable to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(disposable);
+
+	// languageClient.
 
 
 	//
 	// Commands
 	//
-	// let opDurationCommand = commands.registerTextEditorCommand('pridolog.operationDuration',
-	// 	(textEditor: TextEditor, edit: TextEditorEdit): any[] => {
-	// 		window.showInformationMessage('Some duration will be here');
-	// 		return [];
-	// 	});
-	// context.subscriptions.push(opDurationCommand);
+	let opDurationCommand = commands.registerTextEditorCommand('pridolog.operationDuration',
+		(textEditor: TextEditor) => {
+			commands.executeCommand('pridolog.serverGetOperationDuration', 
+				textEditor.document.uri.toString(), textEditor.selection.active.line)
+				.then((result: any) => {
+					if (result) {
+						window.showInformationMessage('Operation duration is: ' + result.durationFormatted);
+					} else {
+						window.showWarningMessage('Can not get operation duration');
+					}					
+				});			
+		});
+	context.subscriptions.push(opDurationCommand);
 
 	let revealLineCommand = commands.registerTextEditorCommand('pridolog.revealLine', 
 		(textEditor: TextEditor, _edit: TextEditorEdit, arg: { lineNumber: number }) => {

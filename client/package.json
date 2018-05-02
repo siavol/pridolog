@@ -62,7 +62,13 @@
 				}
 			}
 		},
-		"commands": []
+		"commands":[
+			{
+				"command": "pridolog.operationDuration",
+				"title": "Show operation duration",
+				"category": "pridolog"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "tsc -p ./",
