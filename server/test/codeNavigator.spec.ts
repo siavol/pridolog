@@ -5,7 +5,7 @@ import * as _ from 'lodash'
 import { DocumentsProvider } from '../src/documentsProvider'
 import { CodeNavigator } from '../src/codeNavigator'
 import { parseTextLog } from '../src/textLog'
-import { emailSession, ccsOfficeToPdfConversionSession, pccisSession } from './testLogs'
+import { emailSession, ccsOfficeToPdfConversionSession, pccisSession, plbToCcsSession } from './testLogs'
 import { DocumentsCache } from '../src/documentsCache';
 
 describe('CodeNavigator', () => {
@@ -379,6 +379,41 @@ describe('CodeNavigator', () => {
                             end: { line: 6, character: 364 }
                         }
                     });
+                });
+            });
+        });
+
+        describe('PLB calls CCS conversion', () => {
+            let codeNavigator: CodeNavigator;
+
+            beforeEach(() => {
+                const documentsProvider = new DocumentsProvider('fake-workspace', null);
+                sinon.stub(documentsProvider, 'getDocuments')
+                    .returns(_.keys(plbToCcsSession));
+                const getDocumentText = sinon.stub(documentsProvider, 'getDocumentText');
+                _.forEach(plbToCcsSession, (text, uri) => getDocumentText.withArgs(uri).returns(text));
+
+                sinon.stub(documentsProvider, 'getUriForRelativePath')
+                    .callsFake(filePath => filePath);
+
+                codeNavigator = new CodeNavigator(documentsProvider, new DocumentsCache);
+            });
+
+            it('for LoadBalancer log entry', () => {
+                const logItem = { 
+                    "name": "LoadBalancer", 
+                    "hostname": "PTPratnightcentos7pasbackcompatprizmdocs13205302c13201396305", 
+                    "pid": 10152, "taskid": 3636, "gid": "q9JrgH8xpqrPSyqdyBmwQA", "level": 30, 
+                    "reqBegin": true, "req": { "method": "POST", "url": "http://127.0.0.1:19010/v2/contentConverters" }, "msg": "", 
+                    "time": "2018-03-03T05:37:41.757Z", 
+                    "v": 0 };
+                const definition = codeNavigator.getDefinition(logItem);
+                expect(definition).eql({
+                    uri: 'ContentConversionService.log',
+                    range: {
+                        start: { line: 0, character: 0 },
+                        end: { line: 0, character: 386 }
+                    }
                 });
             });
         });

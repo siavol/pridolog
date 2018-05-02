@@ -148,9 +148,9 @@ export class CodeNavigator {
         if (request.path) {
             path = request.path;
         } else if (request.url) {
-            const url = /(http|https):\/\/localhost:\d+(.*)/.exec(request.url);
+            const url = /(http|https):\/\/(localhost|127.0.0.1):\d+(.*)/.exec(request.url);
             if (url) {
-                path = url[2];
+                path = url[3];
             }
         } else {
             return null;
