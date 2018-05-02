@@ -3,6 +3,7 @@
 - Improve PAS support
 - Improve CodeLens performance
 - Added navigation to the long operation end
+- Bug fixes
 
 # Version 0.0.2
 - CodeLens for all tasks
