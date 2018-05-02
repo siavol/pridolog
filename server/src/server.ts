@@ -14,6 +14,7 @@ import { DocumentsProvider } from './documentsProvider'
 import { CodeNavigator } from './codeNavigator'
 import { findLogProblems } from './diagnostics'
 import { durationFormat } from './time'
+import { DocumentsCache } from './documentsCache';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -29,6 +30,7 @@ documents.listen(connection);
 // in the passed params the rootPath of the workspace plus the client capabilities. 
 let workspaceRoot: string;
 let documentsProvider: DocumentsProvider;
+let documentsCache: DocumentsCache;
 let codeNavigator: CodeNavigator;
 connection.onInitialize((params): InitializeResult => {
 	workspaceRoot = params.rootPath;
@@ -36,7 +38,8 @@ connection.onInitialize((params): InitializeResult => {
 	// connection.console.log(`Text document sync is FULL: ${documents.syncKind === TextDocumentSyncKind.Full}`);
 
 	documentsProvider = new DocumentsProvider(workspaceRoot, documents);
-	codeNavigator = new CodeNavigator(documentsProvider);
+	documentsCache = new DocumentsCache();
+	codeNavigator = new CodeNavigator(documentsProvider, documentsCache);
 
 	return {
 		capabilities: {

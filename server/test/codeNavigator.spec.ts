@@ -6,6 +6,7 @@ import { DocumentsProvider } from '../src/documentsProvider'
 import { CodeNavigator } from '../src/codeNavigator'
 import { parseTextLog } from '../src/textLog'
 import { emailSession, ccsOfficeToPdfConversionSession, pccisSession } from './testLogs'
+import { DocumentsCache } from '../src/documentsCache';
 
 describe('CodeNavigator', () => {
 
@@ -26,7 +27,7 @@ describe('CodeNavigator', () => {
             getDocumentText.withArgs('OCS.log').returns(emailSession.ocs);
             getDocumentText.withArgs('another.log').returns('{gid:"another"}');
 
-            codeNavigator = new CodeNavigator(documentsProvider);
+            codeNavigator = new CodeNavigator(documentsProvider, new DocumentsCache);
         });
 
         it('should return gid usages from all available log files', () => {
@@ -51,7 +52,7 @@ describe('CodeNavigator', () => {
                 sinon.stub(documentsProvider, 'getUriForRelativePath')
                     .callsFake(filePath => filePath);
 
-                codeNavigator = new CodeNavigator(documentsProvider);
+                codeNavigator = new CodeNavigator(documentsProvider, new DocumentsCache);
             });
 
             it('should return null if there is no outcoming request in log entry', () => {
@@ -164,7 +165,7 @@ describe('CodeNavigator', () => {
                 sinon.stub(documentsProvider, 'getUriForRelativePath')
                     .callsFake(filePath => filePath);
 
-                codeNavigator = new CodeNavigator(documentsProvider);
+                codeNavigator = new CodeNavigator(documentsProvider, new DocumentsCache);
             });
 
             describe('should return location when log entry describes incoming request pccis -> wfs', () => {
@@ -385,6 +386,8 @@ describe('CodeNavigator', () => {
 
     describe('getTasksFromTheLogFile', () => {
         let codeNavigator: CodeNavigator;
+        let documentsCache: DocumentsCache;
+        let cacheSetSpy: sinon.SinonSpy;
 
         beforeEach(() => {
             const documentsProvider = new DocumentsProvider(null, null);
@@ -397,7 +400,10 @@ describe('CodeNavigator', () => {
             getDocumentText.withArgs('ECS.log').returns(emailSession.ecs);
             getDocumentText.withArgs('OCS.log').returns(emailSession.ocs);
 
-            codeNavigator = new CodeNavigator(documentsProvider);
+            documentsCache = new DocumentsCache();
+            cacheSetSpy = sinon.spy(documentsCache, 'set');
+
+            codeNavigator = new CodeNavigator(documentsProvider, documentsCache);
         });
 
         it('should return tasks from the log file', () => {
@@ -417,10 +423,50 @@ describe('CodeNavigator', () => {
                 }
             ]);
         });
+
+        it('should update documents cache with tasks have been found', () => {
+            codeNavigator.getTasksFromTheLogFile('ECS.log');
+
+            expect(cacheSetSpy.calledWithMatch('ECS.log', { tasks: sinon.match.array }))
+                .to.be.true;
+        });
+
+        describe('when cache has tasks for uri', () => {
+
+            beforeEach(() => {
+                const logText = emailSession.ecs;
+                const logLines = parseTextLog(logText);
+
+                documentsCache.set('ECS.log', {
+                    tasks: [
+                        {
+                            taskBegin: logLines[1],
+                            taskEnd: logLines[2]
+                        }
+                    ]
+                })
+            });
+
+            it('should return result from cache', () => {
+                const logText = emailSession.ecs;
+                const logLines = parseTextLog(logText);
+
+                const tasks = codeNavigator.getTasksFromTheLogFile('ECS.log');
+
+                expect(tasks).eql([
+                    {
+                        taskBegin: logLines[1],
+                        taskEnd: logLines[2]
+                    }
+                ]);
+            });
+        });
     });
 
     describe('getOperationsLongerThan', () => {
         let codeNavigator: CodeNavigator;
+        let documentsCache: DocumentsCache;
+        let cacheSetSpy: sinon.SinonSpy;
 
         beforeEach(() => {
             const documentsProvider = new DocumentsProvider(null, null);
@@ -431,7 +477,10 @@ describe('CodeNavigator', () => {
             const getDocumentText = sinon.stub(documentsProvider, 'getDocumentText');
             getDocumentText.withArgs('OCS.log').returns(emailSession.ocs);
 
-            codeNavigator = new CodeNavigator(documentsProvider);
+            documentsCache = new DocumentsCache();
+            cacheSetSpy = sinon.spy(documentsCache, 'set');
+
+            codeNavigator = new CodeNavigator(documentsProvider, documentsCache);
         });
 
         it('should return operations longer than minDuration (ms)', () => {
@@ -445,6 +494,39 @@ describe('CodeNavigator', () => {
                     durationMs: 169
                 }
             ])
+        });
+
+        it('should update documents cache with operations have been found', () => {
+            codeNavigator.getOperationsLongerThan('OCS.log', 100);
+
+            expect(cacheSetSpy.calledWithMatch('OCS.log', { longOperations: sinon.match.array }))
+                .to.be.true;
+        });
+
+        describe('when cache has long operations for uri', () => {
+
+            beforeEach(() => {
+                const logText = emailSession.ecs;
+                const logLines = parseTextLog(logText);
+
+                documentsCache.set('OCS.log', {
+                    longOperations: [{ logLine: logLines[1], durationMs: 321 }]
+                });
+            });
+
+            it('should return result from cache', () => {
+                const logText = emailSession.ecs;
+                const logLines = parseTextLog(logText);
+
+                const operations = codeNavigator.getOperationsLongerThan('OCS.log', 100);
+
+                expect(operations).eql([
+                    {
+                        logLine: logLines[1], 
+                        durationMs: 321
+                    }
+                ]);
+            });
         });
     });
 });
