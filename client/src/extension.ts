@@ -50,9 +50,13 @@ export function activate(context: ExtensionContext) {
 	let opDurationCommand = commands.registerTextEditorCommand('pridolog.operationDuration',
 		(textEditor: TextEditor) => {
 			commands.executeCommand('pridolog.serverGetOperationDuration', 
-				textEditor.document.uri, textEditor.selection.active.line)
-				.then((result) => {
-					window.showInformationMessage('Some duration will be here: ' + JSON.stringify(result));
+				textEditor.document.uri.toString(), textEditor.selection.active.line)
+				.then((result: any) => {
+					if (result) {
+						window.showInformationMessage('Operation duration is: ' + result.durationFormatted);
+					} else {
+						window.showWarningMessage('Can not get operation duration');
+					}					
 				});			
 		});
 	context.subscriptions.push(opDurationCommand);

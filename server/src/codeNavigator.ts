@@ -208,6 +208,29 @@ export class CodeNavigator {
         }
     }
 
+    public getOperationDuration(uri: string, lineNumber: number): ILogOperationDuration {
+        const logLines = this.getLogLines(uri);
+
+        const operationLine = logLines[lineNumber];
+        const taskKey = this.getTaskKey(operationLine.logItem);
+        for (let lineIndex = lineNumber+1; lineIndex < logLines.length; lineIndex++) {
+            const thisLine = logLines[lineIndex];
+            const thisKey = this.getTaskKey(thisLine.logItem);
+            if (thisKey === taskKey) {
+                const prevTime = Date.parse(operationLine.logItem.time);
+                const thisTime = Date.parse(thisLine.logItem.time);
+                const durationMs = thisTime - prevTime;
+                return {
+                    logLine: operationLine,
+                    nextLine: thisLine,
+                    durationMs
+                };
+            }
+        }
+
+        return null;
+    }
+
     public getOperationsLongerThan(uri: string, minDuration: number): ILogOperationDuration[] {
         const cachedDocument = this.documentsCache.get(uri);
         if (cachedDocument && cachedDocument.longOperations) {

@@ -7,8 +7,7 @@ import {
 	ReferenceParams,
 	Location, Range, Position,
 	CodeLensParams, CodeLens,
-	Command, ExecuteCommandParams,
-	NotificationType
+	Command, ExecuteCommandParams
 } from 'vscode-languageserver';
 import { getTextLines } from './textLog'
 import { DocumentsProvider } from './documentsProvider'
@@ -71,22 +70,21 @@ connection.onInitialize((params): InitializeResult => {
 
 
 // The settings interface describe the server relevant settings part
-// interface Settings {
-// 	pridolog: PridologSettings;
-// }
+interface Settings {
+	pridolog: PridologSettings;
+}
 
-// interface PridologSettings {
-// 	showLongOperations: {
-// 		enabled: boolean;
-// 		durationInMs: number;
-// 	};
-// }
+interface PridologSettings {
+	showLongOperations: {
+		enabled: boolean;
+		durationInMs: number;
+	};
+}
 
 // The duration in ms for the long operation of -1 if this analysis is disabled
-// let _longOperationDurationMs: number = -1;
+let longOperationDurationMs: number = -1;
 // The settings have changed. Is send on server activation
 // as well.
-/*
 connection.onDidChangeConfiguration((change) => {
 	let settings = <Settings>change.settings;
 
@@ -102,7 +100,6 @@ connection.onDidChangeConfiguration((change) => {
 		documentsCache.dropProperty('longOperations');
 	}
 });
-*/
 
 function validateTextDocument(documentText: string, documentUri: string): void {
 	const diagnostics = findLogProblems(documentText);
@@ -215,8 +212,12 @@ connection.onExecuteCommand((params: ExecuteCommandParams): any => {
 	connection.console.log(JSON.stringify(params));
 	switch (params.command) {
 		case 'pridolog.serverGetOperationDuration':
-			// connection.sendNotification
-			return { test: 123 };
+			const documentUri = params.arguments[0];
+			const lineNumber = params.arguments[1];
+			const duration = codeNavigator.getOperationDuration(documentUri, lineNumber);
+			return duration 
+				? { durationMs: duration.durationMs, durationFormatted: durationFormat(duration.durationMs) } 
+				: null;
 		default:
 			return undefined;
 	}

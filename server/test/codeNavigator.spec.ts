@@ -566,4 +566,32 @@ describe('CodeNavigator', () => {
             });
         });
     });
+
+    describe('getOperationDuration', () => {
+        let codeNavigator: CodeNavigator;
+
+        beforeEach(() => {
+            const documentsProvider = new DocumentsProvider(null, null);
+            sinon.stub(documentsProvider, 'getDocuments')
+                .returns([
+                    'OCS.log'
+                ]);
+            const getDocumentText = sinon.stub(documentsProvider, 'getDocumentText');
+            getDocumentText.withArgs('OCS.log').returns(emailSession.ocs);
+
+            codeNavigator = new CodeNavigator(documentsProvider, new DocumentsCache());
+        });
+
+        it('should return operation duration', () => {
+            const logText = emailSession.ocs;
+            const logLines = parseTextLog(logText);
+
+            const duration = codeNavigator.getOperationDuration('OCS.log', 2);
+            expect(duration).eql({
+                logLine: logLines[2],
+                nextLine: logLines[4],
+                durationMs: 169
+            })
+        });
+    });
 });
