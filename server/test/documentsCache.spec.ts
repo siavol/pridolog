@@ -90,4 +90,48 @@ describe('DocumentsCache', () => {
             expect(container1.lines).eql(container2.lines);
         });
     });
+
+    describe('dropUri', () => {
+        beforeEach(() => {
+            const data = {
+                lines: [{ line: 0, logItem: { foo: 1 }, source: 'log source' }]
+            };
+            cache.set('test_uri', data);
+        });
+
+        it('deletes cache for document', () => {
+            cache.dropUri('test_uri');
+            expect(cache.get('test_uri')).to.be.undefined;
+        });
+    });
+
+    describe('dropProperty', () => {
+        const uri1_logLine = { line: 0, logItem: { foo: 1 }, source: 'log uri_1 source' };
+        const uri2_logLine = { line: 1, logItem: { bar: 2 }, source: 'log uri_2 source' };
+
+        beforeEach(() => {
+
+            cache.set('test_uri_1', {
+                lines: [uri1_logLine],
+                longOperations: [{logLine: uri1_logLine, durationMs: 123}]
+            });
+            cache.set('test_uri_2', {
+                lines: [uri2_logLine],
+                longOperations: [{ logLine: uri2_logLine, durationMs: 456 }]
+            });
+        });
+
+        it('removes property for every cached document', () => {
+            cache.dropProperty('longOperations');
+
+            expect(cache.get('test_uri_1')).eql({
+                uri: 'test_uri_1',
+                lines: [ uri1_logLine ]
+            });
+            expect(cache.get('test_uri_2')).eql({
+                uri: 'test_uri_2',
+                lines: [uri2_logLine]
+            });
+        })        
+    });
 });

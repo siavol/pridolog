@@ -84,13 +84,17 @@ let longOperationDurationMs: number = -1;
 // as well.
 connection.onDidChangeConfiguration((change) => {
 	let settings = <Settings>change.settings;
-	if (settings.pridolog 
-		&& settings.pridolog.showLongOperations
-		&& settings.pridolog.showLongOperations.enabled) {
-		
-		longOperationDurationMs = settings.pridolog.showLongOperations.durationInMs;
-	} else {
-		longOperationDurationMs = -1;
+
+	if (!settings.pridolog) {
+		return;
+	}
+
+	if (!_.isNil(settings.pridolog.showLongOperations)) {
+		longOperationDurationMs = settings.pridolog.showLongOperations.enabled
+			? settings.pridolog.showLongOperations.durationInMs
+			: -1;
+
+		documentsCache.dropProperty('longOperations');
 	}
 });
 
