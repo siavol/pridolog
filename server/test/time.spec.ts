@@ -4,6 +4,7 @@ import { durationFormat } from '../src/time'
 describe('time', () => {
 
     [
+        { durationInMs: 0, expectedResult: '0 ms' },
         { durationInMs: 2, expectedResult: '2 ms' },
         { durationInMs: 2003, expectedResult: '2 seconds 3 ms' },
         { durationInMs: 2000, expectedResult: '2 seconds' },
