@@ -67,6 +67,11 @@
 				"command": "pridolog.operationDuration",
 				"title": "Show operation duration",
 				"category": "pridolog"
+			},
+			{
+				"command": "pridolog.showGidDocument",
+				"title": "Show log entries for the gid",
+				"category": "pridolog"
 			}
 		]
 	},

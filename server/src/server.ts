@@ -51,7 +51,7 @@ connection.onInitialize((params): InitializeResult => {
 				resolveProvider: true
 			},
 			executeCommandProvider: {
-				commands: [ 'pridolog.serverGetOperationDuration' ]
+				commands: [ 'pridolog.server.getOperationDuration' ]
 			}
 		}
 	}
@@ -211,7 +211,7 @@ connection.onCodeLensResolve((lens: CodeLens): CodeLens => {
 connection.onExecuteCommand((params: ExecuteCommandParams): any => {
 	connection.console.log(JSON.stringify(params));
 	switch (params.command) {
-		case 'pridolog.serverGetOperationDuration':
+		case 'pridolog.server.getOperationDuration':
 			const documentUri = params.arguments[0];
 			const lineNumber = params.arguments[1];
 			const duration = codeNavigator.getOperationDuration(documentUri, lineNumber);
