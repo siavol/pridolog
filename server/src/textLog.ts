@@ -28,8 +28,6 @@ export function parseTextLog(text: string, errHandler?: (err: IParsingError) => 
                     logItem: logItem
                 });
             } catch (err) {
-                // console.log(`Parsing error, line ${index}: ${source}`);
-                // console.log(err);
                 if (errHandler) {
                     errHandler({
                         line: index,

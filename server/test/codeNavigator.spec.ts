@@ -10,7 +10,7 @@ import { DocumentsCache } from '../src/documentsCache';
 
 describe('CodeNavigator', () => {
 
-    describe('findAllEntriesForGid', () => {
+    describe('findAllEntryLocationsForGid', () => {
 
         let codeNavigator: CodeNavigator;
 
@@ -31,7 +31,7 @@ describe('CodeNavigator', () => {
         });
 
         it('should return gid usages from all available log files', () => {
-            const gidReferences = codeNavigator.findAllEntriesForGid('kjPhKGtz2zaCeReGf1Dkqg');
+            const gidReferences = codeNavigator.findAllEntryLocationsForGid('kjPhKGtz2zaCeReGf1Dkqg');
             
             expect(gidReferences).to.have.length.greaterThan(0);
         });
