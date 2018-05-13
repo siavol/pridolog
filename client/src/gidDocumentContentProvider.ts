@@ -1,4 +1,6 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
+// import * as _ from 'lodash';
 
 interface ILogItem {
     uri: string;
@@ -12,18 +14,23 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
 
     // onDidChange?: vscode.Event<vscode.Uri>;
 
-    provideTextDocumentContent(uri: vscode.Uri, _token: vscode.CancellationToken): vscode.ProviderResult<string> {
+    public provideTextDocumentContent(uri: vscode.Uri, _token: vscode.CancellationToken): vscode.ProviderResult<string> {
         const gid = decodeGid(uri);
 
         return vscode.commands.executeCommand('pridolog.server.getLogItemsForGid', gid)
             .then((logItems: ILogItem[]) => {
+
                 return `<!DOCTYPE html>
                     <html lang="en">
-                    <head></head>
+                    <head>
+                        <link rel="stylesheet" href="${path.join(__dirname, '../../node_modules/highlight.js/styles', 'default.css')}">
+                        <script src="${path.join(__dirname, '../../node_modules/highlight.js/lib/highlight.js')}"></script>
+                        <script>hljs.initHighlightingOnLoad();</script>
+                    </head>
                     <body>
-                        <h1>GID REPORT for</h1> <b>${gid}</b>
+                        <h1>gid report for <b>${gid}</b></h1>
                         <div>
-                        ${logItems.map(item => `<p>${JSON.stringify(item.logItem)}</p>`).join('\n')}
+                        ${logItems.map(this.getLogItemHtml).join('\n')}
                         </div>
                     </body>`;
             }, rejectedReason => {
@@ -34,6 +41,10 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                     <h1>Operation rejected:</h1> 
                     ${rejectedReason}`;
             });
+    }
+
+    private getLogItemHtml(item: ILogItem): string {
+        return `<pre>${JSON.stringify(item.logItem)}</pre>`
     }
 }
 
