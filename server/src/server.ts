@@ -223,8 +223,10 @@ connection.onExecuteCommand((params: ExecuteCommandParams): any => {
 				: null;
 		case 'pridolog.server.getLogItemsForGid':
 			const gid = params.arguments[0];
-			return codeNavigator.findAllLogLinesForGid(gid)
+			return _(codeNavigator.findAllLogLinesForGid(gid))
+				.sort(line => Date.parse(line.logItem.time))
 				.map(line => _.pick(line, 'uri', 'line', 'logItem'))
+				.value();
 		default:
 			return undefined;
 	}

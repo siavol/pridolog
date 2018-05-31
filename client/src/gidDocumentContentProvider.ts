@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-// import * as _ from 'lodash';
+import * as _ from 'lodash';
 
 interface ILogItem {
     uri: string;
@@ -20,6 +20,30 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
         return vscode.commands.executeCommand('pridolog.server.getLogItemsForGid', gid)
             .then((logItems: ILogItem[]) => {
 
+                let tableHtml = '';
+                let itemsToProcess = logItems;
+                while (itemsToProcess.length > 0) {
+                    let lastUri: string = undefined;
+                    const itemsChain = _(itemsToProcess)
+                        .takeWhile(item => {
+                            const result = lastUri === undefined || lastUri === item.uri;
+                            lastUri = item.uri;                        
+                            return result;
+                        })
+                        .value();
+
+                    const filePath = path.relative(
+                        vscode.workspace.workspaceFolders[0].uri.fsPath,
+                        itemsChain[0].uri.replace('file://', ''));
+                    tableHtml += `<tr><td colSpan="3"><h2>${filePath}</h2></td></tr>\n`;
+
+                    itemsChain.forEach(item => {
+                        tableHtml += this.getLogItemHtml(item) + '\n';
+                    });
+
+                    itemsToProcess = _.drop(itemsToProcess, itemsChain.length);
+                }
+
                 return `<!DOCTYPE html>
                     <html lang="en">
                     <head>
@@ -30,7 +54,9 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                     <body>
                         <h1>gid report for <b>${gid}</b></h1>
                         <div>
-                        ${logItems.map(this.getLogItemHtml).join('\n')}
+                            <table>
+                            ${tableHtml}
+                            </table>
                         </div>
                     </body>`;
             }, rejectedReason => {
@@ -44,7 +70,23 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
     }
 
     private getLogItemHtml(item: ILogItem): string {
-        return `<pre>${JSON.stringify(item.logItem)}</pre>`
+        const openParameters = 
+            decodeURI(item.uri);
+        /*[
+            decodeURI(item.uri),
+            {
+                selection: new vscode.Range(
+                    new vscode.Position(item.line, 0),
+                    new vscode.Position(item.line, 10)
+                )
+            }
+        ];*/
+        const goToSourceHref = encodeURI(`command:vscode.open?${openParameters}`);
+        return `<tr>
+                    <td><a href="${goToSourceHref}">${item.line}:</a></td>
+                    <td>${item.logItem.time}</td>
+                    <td>${JSON.stringify(item.logItem)}</td>
+                </tr>`
     }
 }
 
