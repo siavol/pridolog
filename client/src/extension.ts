@@ -7,7 +7,8 @@ import {
 	workspace, window,
 	ExtensionContext, commands, TextEditor, TextEditorEdit, 
 	Selection, 
-	Disposable} from 'vscode';
+	Disposable,
+	Uri} from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
 
 export function activate(context: ExtensionContext) {
@@ -87,13 +88,22 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(showGidDocumentCommand);
 
 	const revealLineCommand = commands.registerTextEditorCommand('pridolog.revealLine', 
-		(textEditor: TextEditor, _edit: TextEditorEdit, arg: { lineNumber: number }) => {
-			const range = textEditor.document.lineAt(arg.lineNumber).range;
-			textEditor.selection = new Selection(range.start, range.end);
-			textEditor.revealRange(range);
+		(textEditor: TextEditor, 
+			_edit: TextEditorEdit, 
+			arg: { lineNumber: number }) => {
+				const range = textEditor.document.lineAt(arg.lineNumber).range;
+				textEditor.selection = new Selection(range.start, range.end);
+				textEditor.revealRange(range);
 	});
 	context.subscriptions.push(revealLineCommand);
 
+	commands.registerCommand('pridolog.open',(arg: {uri: string, line: number}) => {
+		window.showTextDocument(Uri.parse(arg.uri)).then(textEditor => {
+			const range = textEditor.document.lineAt(arg.line).range;
+			textEditor.selection = new Selection(range.start, range.end);
+			textEditor.revealRange(range);
+		});
+	});
 
 	//
 	// Document Conten Provider

@@ -21,7 +21,7 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
             .then((logItems: ILogItem[]) => {
 
                 let tableHtml = '';
-                let itemsToProcess = logItems;
+                let itemsToProcess = _.orderBy(logItems, ['logItem.time', 'line']);
                 while (itemsToProcess.length > 0) {
                     let lastUri: string = undefined;
                     const itemsChain = _(itemsToProcess)
@@ -34,7 +34,7 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
 
                     const filePath = path.relative(
                         vscode.workspace.workspaceFolders[0].uri.fsPath,
-                        itemsChain[0].uri.replace('file://', ''));
+                        decodeURI(itemsChain[0].uri).replace('file://', ''));
                     tableHtml += `<tr><td colSpan="3"><h2>${filePath}</h2></td></tr>\n`;
 
                     itemsChain.forEach(item => {
@@ -47,9 +47,24 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                 return `<!DOCTYPE html>
                     <html lang="en">
                     <head>
+                        <script src="${path.join(__dirname, '../../node_modules/jquery/dist/jquery.min.js')}"></script>
                         <link rel="stylesheet" href="${path.join(__dirname, '../../node_modules/highlight.js/styles', 'default.css')}">
                         <script src="${path.join(__dirname, '../../node_modules/highlight.js/lib/highlight.js')}"></script>
                         <script>hljs.initHighlightingOnLoad();</script>
+                        <script>
+    $(function() {
+        $("button.plus").click(function(e) {
+            var parent = $(e.target).parent().parent();
+            var logItemPre = parent.find("pre.log-item");
+            var logItem = JSON.parse(logItemPre.text());
+            var logItemExpanded = JSON.stringify(logItem, undefined, 2);
+            logItemPre.text(logItemExpanded);
+
+            parent.toggleClass("expanded");
+            $(e.target).text("-");
+        });
+    });
+                        </script>
                     </head>
                     <body>
                         <h1>gid report for <b>${gid}</b></h1>
@@ -70,22 +85,16 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
     }
 
     private getLogItemHtml(item: ILogItem): string {
-        const openParameters = 
-            decodeURI(item.uri);
-        /*[
-            decodeURI(item.uri),
-            {
-                selection: new vscode.Range(
-                    new vscode.Position(item.line, 0),
-                    new vscode.Position(item.line, 10)
-                )
-            }
-        ];*/
-        const goToSourceHref = encodeURI(`command:vscode.open?${openParameters}`);
+        const openParameters = {
+            uri: item.uri,
+            line: item.line
+        };
+        const goToSourceHref = encodeURI(`command:pridolog.open?${JSON.stringify(openParameters)}`);
         return `<tr>
-                    <td><a href="${goToSourceHref}">${item.line}:</a></td>
+                    <td><button class="plus">+</button></td>
+                    <td><a href="${goToSourceHref}"><pre>${item.line}:</pre></a></td>
                     <td>${item.logItem.time}</td>
-                    <td>${JSON.stringify(item.logItem)}</td>
+                    <td><pre class="log-item">${JSON.stringify(item.logItem)}</pre></td>
                 </tr>`
     }
 }
