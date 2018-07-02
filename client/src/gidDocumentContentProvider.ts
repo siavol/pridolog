@@ -22,6 +22,12 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
 
                 let tableHtml = '';
                 let itemsToProcess = _.orderBy(logItems, ['logItem.time', 'line']);
+
+                let startTime: number = null;
+                if (itemsToProcess.length) {
+                    startTime = Date.parse(itemsToProcess[0].logItem.time);
+                }
+
                 while (itemsToProcess.length > 0) {
                     let lastUri: string = undefined;
                     const itemsChain = _(itemsToProcess)
@@ -38,7 +44,7 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                     tableHtml += `<tr><td colSpan="3"><h2>${filePath}</h2></td></tr>\n`;
 
                     itemsChain.forEach(item => {
-                        tableHtml += this.getLogItemHtml(item) + '\n';
+                        tableHtml += this.getLogItemHtml(item, startTime) + '\n';
                     });
 
                     itemsToProcess = _.drop(itemsToProcess, itemsChain.length);
@@ -69,6 +75,9 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                     <body>
                         <h1>gid report for <b>${gid}</b></h1>
                         <div>
+                            Started at ${startTime}
+                        </div>
+                        <div>
                             <table>
                             ${tableHtml}
                             </table>
@@ -84,16 +93,18 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
             });
     }
 
-    private getLogItemHtml(item: ILogItem): string {
+    private getLogItemHtml(item: ILogItem, startTime: number): string {
         const openParameters = {
             uri: item.uri,
             line: item.line
         };
+        const logTime = Date.parse(item.logItem.time);
+        const timeShift = logTime - startTime;
         const goToSourceHref = encodeURI(`command:pridolog.open?${JSON.stringify(openParameters)}`);
         return `<tr>
                     <td><button class="plus">+</button></td>
                     <td><a href="${goToSourceHref}"><pre>${item.line}:</pre></a></td>
-                    <td>${item.logItem.time}</td>
+                    <td>+${timeShift} ms</td>
                     <td><pre class="log-item">${JSON.stringify(item.logItem)}</pre></td>
                 </tr>`
     }
