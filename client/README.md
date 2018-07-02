@@ -32,3 +32,7 @@ Use *Go to Definition* and *Peek Definition* commands to navigate thru request l
 ### Find gid references
 Use *Find All References* command to find all log entries for the gid:
 ![Find All References](https://git.jpg.com/ishestakov/pridolog/raw/master/tutorial-gifs/find_all_references.gif)
+
+### Gid document
+Usee *Show log entries for the gid* command to show all log entries for the gid in a separate document.
+TODO: add tutorial gif here
