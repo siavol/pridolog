@@ -38,10 +38,10 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                         })
                         .value();
 
-                    const filePath = path.relative(
+                    const filePath = this.getFileShortPath(
                         vscode.workspace.workspaceFolders[0].uri.fsPath,
-                        decodeURI(itemsChain[0].uri).replace('file://', ''));
-                    tableHtml += `<tr><td colSpan="3"><h2>${filePath}</h2></td></tr>\n`;
+                        decodeURI(itemsChain[0].uri));
+                    tableHtml += `<tr><td colSpan="4"><h2>${filePath}</h2></td></tr>\n`;
 
                     itemsChain.forEach(item => {
                         tableHtml += this.getLogItemHtml(item, startTime) + '\n';
@@ -54,9 +54,24 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                     <html lang="en">
                     <head>
                         <script src="${path.join(__dirname, '../../node_modules/jquery/dist/jquery.min.js')}"></script>
-                        <link rel="stylesheet" href="${path.join(__dirname, '../../node_modules/highlight.js/styles', 'default.css')}">
+
                         <script src="${path.join(__dirname, '../../node_modules/highlight.js/lib/highlight.js')}"></script>
-                        <script>hljs.initHighlightingOnLoad();</script>
+                        <script>
+                            // hack to load node module with json language
+                            var module = {};
+                        </script>
+                        <script src="${path.join(__dirname, '../../node_modules/highlight.js/lib/languages/json.js')}"></script>
+                        <script>
+                            // register loaded language
+                            hljs.registerLanguage('json', module.exports);
+                            delete module;
+                        </script>
+
+                        <link rel="stylesheet" href="${path.join(__dirname, '../../node_modules/highlight.js/styles/vs2015.css')}"></link>
+                        <script>
+                            //hljs.initHighlightingOnLoad();
+                            //hljs.registerLanguage('json'
+                        </script>
                         <script>
     $(function() {
         $("button.plus").click(function(e) {
@@ -64,10 +79,19 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
             var logItemPre = parent.find("pre.log-item");
             var logItem = JSON.parse(logItemPre.text());
             var logItemExpanded = JSON.stringify(logItem, undefined, 2);
-            logItemPre.text(logItemExpanded);
+
+            console.log('replacing');
+            var newLogItemPre = $("<pre class='log-item json'>")
+                .text(logItemExpanded);
+            hljs.highlightBlock(newLogItemPre[0]);
+            logItemPre.replaceWith(newLogItemPre);
 
             parent.toggleClass("expanded");
             $(e.target).text("-");
+        });
+
+        $('pre.log-item').each(function(i, block) {
+            hljs.highlightBlock(block);
         });
     });
                         </script>
@@ -105,8 +129,23 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                     <td><button class="plus">+</button></td>
                     <td><a href="${goToSourceHref}"><pre>${item.line}:</pre></a></td>
                     <td>+${timeShift} ms</td>
-                    <td><pre class="log-item">${JSON.stringify(item.logItem)}</pre></td>
+                    <td><pre class="log-item json">${JSON.stringify(item.logItem)}</pre></td>
                 </tr>`
+    }
+
+    private getFileShortPath(workspace: string, file: string) {
+        const possiblePrefixes = ['file:///', 'file://', '']; // should be sorted by lenght desc
+        for (let i = 0; i < possiblePrefixes.length; i++) {
+            const prefix = possiblePrefixes[i];
+            if (file.startsWith(prefix)) {
+                const trimFile = file.slice(prefix.length);
+                const short = path.relative(workspace, trimFile);
+                if (short.length < file.length) {
+                    return short;
+                }                    
+            }
+        }
+        return file;
     }
 }
 
