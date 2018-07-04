@@ -60,39 +60,10 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                         <script>
                             var data = ${JSON.stringify(data)};
                             renderData(data);
-
-/*    $(function() {
-        $("button.plus").click(function(e) {
-            var parent = $(e.target).parent().parent();
-            var logItemPre = parent.find("pre.log-item");
-            var logItem = JSON.parse(logItemPre.text());
-            var logItemExpanded = JSON.stringify(logItem, undefined, 2);
-
-            console.log('replacing');
-            var newLogItemPre = $("<pre class='log-item json'>")
-                .text(logItemExpanded);
-            hljs.highlightBlock(newLogItemPre[0]);
-            logItemPre.replaceWith(newLogItemPre);
-
-            parent.toggleClass("expanded");
-            $(e.target).text("-");
-        });
-
-        $('pre.log-item').each(function(i, block) {
-            hljs.highlightBlock(block);
-        });
-    });*/
                         </script>
                     </head>
                     <body>
                         <div id="root"></div>
-
-                        <!--
-                        <div>
-                            <table>
-                            
-                            </table>
-                        </div>-->
                     </body>`;
             }, rejectedReason => {
                 return `<!DOCTYPE html>

@@ -33,5 +33,5 @@ const Title = (props: {gid: string}) => <h1>gid report for <i>{props.gid}</i></h
 
 const StartTime = (props: { time: number }) => 
     <div>
-        Started at <i>{new Date(props.time).toUTCString()}</i>
+        Session started at <i>{new Date(props.time).toUTCString()}</i>
     </div>;

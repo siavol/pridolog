@@ -3,12 +3,12 @@ interface ILogItemsGroup {
     logItems: ILogItem[]; 
 }
 
-class GroupedLogItems extends React.Component {
-    props: {
-        logItems: ILogItem[];
-        workspacePath: string;
-        startTime: number;
-    }
+class GroupedLogItems extends React.Component<
+{
+    logItems: ILogItem[];
+    workspacePath: string;
+    startTime: number;
+}> {
 
     private getLogItemGroups() {
         let result: ILogItemsGroup[] = [];
@@ -76,41 +76,76 @@ const LogFileRow = (props: { group: ILogItemsGroup; startTime: number }) => <tr>
     <td colSpan={4}><h2>{decodeURI(props.group.uri)}</h2></td>
 </tr>;
 
-const LogItemRow = (props: { logItem: ILogItem, startTime: number }) => {
+class LogItemRow extends React.Component<
+    {
+        logItem: ILogItem,
+        startTime: number
+    },
+    {
+        expanded: boolean
+    }> { 
+    state = {
+        expanded: false
+    };
+
+    onExpandClick = () => {
+        this.setState({
+            expanded: !this.state.expanded            
+        });
+    }
+    
+    public render() {
+        const logTime = Date.parse(this.props.logItem.logItem.time);
+        const timeShift = logTime.valueOf() - this.props.startTime;
+
+        return <tr>
+            <td>
+                <LinkToLogLine logItem={this.props.logItem} />
+            </td>
+            <td>+{timeShift} ms</td>
+            <td>
+                <ExpandButton expanded={this.state.expanded} onClick={this.onExpandClick} />
+            </td>
+            <td>
+                <LogLineText logItem={this.props.logItem} expanded={this.state.expanded} />
+            </td>
+        </tr>
+    };
+}
+
+const ExpandButton = (props: {expanded: boolean, onClick?: () => any}) => {
+    return <button onClick={props.onClick}>{props.expanded ? '-' : '+'}</button>;
+}
+
+const LinkToLogLine = (props: {logItem: ILogItem}) => {
     const openParameters = {
         uri: props.logItem.uri,
         line: props.logItem.line
     };
     const goToSourceHref = encodeURI(`command:pridolog.open?${JSON.stringify(openParameters)}`);
+    return <a href={goToSourceHref}>
+        <pre>{props.logItem.line}:</pre>
+    </a>;
+}
 
-    const logTime = Date.parse(props.logItem.logItem.time);
-    const timeShift = logTime.valueOf() - props.startTime;
-
-    return <tr>
-        <td>
-            <a href={goToSourceHref}><pre>{props.logItem.line}:</pre></a>
-        </td>
-        <td>+{timeShift} ms</td>
-        <td>
-            <button>+</button>
-        </td>
-        <td>
-            <LogLineText logItem={props.logItem} />
-        </td>
-    </tr>
-};
-
-class LogLineText extends React.Component {
-    props: {
-        logItem: ILogItem;
-    }
-
+class LogLineText extends React.Component<
+{
+    logItem: ILogItem;
+    expanded: boolean;
+}> {
     public render() {
-        const logLine = JSON.stringify(this.props.logItem.logItem);
+        const logLine = this.props.expanded 
+            ? JSON.stringify(this.props.logItem.logItem, undefined, 2)
+            : JSON.stringify(this.props.logItem.logItem);
         return <pre className="log-item json">{logLine}</pre>;
     }
 
     public componentDidMount() {
+        var current = ReactDOM.findDOMNode(this);
+        hljs.highlightBlock(current);
+    }
+
+    public componentDidUpdate() {
         var current = ReactDOM.findDOMNode(this);
         hljs.highlightBlock(current);
     }
