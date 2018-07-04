@@ -79,11 +79,16 @@ export function activate(context: ExtensionContext) {
 				prompt: 'Enter the gid for which the document will be generated',
 				placeHolder: 'gid',
 				value: gidValue
-			}).then(gid => {
-				if (gid)
-					commands.executeCommand('vscode.previewHtml', 
-						encodeGid(gid), undefined, `gid: ${gid}`);
-			});
+			}).then(
+				gid => {
+					if (gid)
+						commands.executeCommand('vscode.previewHtml', 
+							encodeGid(gid), undefined, `gid: ${gid}`);
+				},
+				error => {
+					window.showErrorMessage(error);
+				}
+			);
 		});
 	context.subscriptions.push(showGidDocumentCommand);
 
