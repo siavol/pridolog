@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as _ from 'lodash';
 
 interface ILogItem {
     uri: string;
@@ -19,32 +20,18 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
         return vscode.commands.executeCommand('pridolog.server.getLogItemsForGid', gid)
             .then((logItems: ILogItem[]) => {
 
-                // let tableHtml = '';
-
-                // while (itemsToProcess.length > 0) {
-                //     let lastUri: string = undefined;
-                //     const itemsChain = _(itemsToProcess)
-                //         .takeWhile(item => {
-                //             const result = lastUri === undefined || lastUri === item.uri;
-                //             lastUri = item.uri;                        
-                //             return result;
-                //         })
-                //         .value();
-
-                //     const filePath = this.getFileShortPath(
-                //         vscode.workspace.workspaceFolders[0].uri.fsPath,
-                //         decodeURI(itemsChain[0].uri));
-                //     tableHtml += `<tr><td colSpan="4"><h2>${filePath}</h2></td></tr>\n`;
-
-                //     itemsChain.forEach(item => {
-                //         tableHtml += this.getLogItemHtml(item, startTime) + '\n';
-                //     });
-
-                //     itemsToProcess = _.drop(itemsToProcess, itemsChain.length);
-                // }
-
                 const browserPath = path.join(__dirname, '../../browser');
-                var data = { gid, logItems };
+                const documentFileLinks = [
+                    './gid-document.js',
+                    './grouped-log-items.js'
+                ].map(file => `<script src="${path.join(browserPath, 'src', file)}"></script>`);
+
+                const orderedLogItems = _.orderBy(logItems, ['logItem.time', 'line']);
+                var data = {
+                    workspacePath: vscode.workspace.workspaceFolders[0].uri.fsPath,
+                    gid, 
+                    logItems: orderedLogItems
+                };
 
                 return `<!DOCTYPE html>
                     <html lang="en">
@@ -66,12 +53,14 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                             delete module;
                         </script>
 
+                        ${documentFileLinks.join('\n')}
+
                         <link rel="stylesheet" href="${path.join(browserPath, './node_modules/highlight.js/styles/vs2015.css')}"></link>
 
-                        <script src="${path.join(browserPath, './src/gid-document.js')}"></script>
                         <script>
                             var data = ${JSON.stringify(data)};
                             renderData(data);
+
 /*    $(function() {
         $("button.plus").click(function(e) {
             var parent = $(e.target).parent().parent();
@@ -123,28 +112,10 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
         const logTime = Date.parse(item.logItem.time);
         const timeShift = logTime - startTime;
         const goToSourceHref = encodeURI(`command:pridolog.open?${JSON.stringify(openParameters)}`);
-        return `<tr>
-                    <td><button class="plus">+</button></td>
-                    <td><a href="${goToSourceHref}"><pre>${item.line}:</pre></a></td>
-                    <td>+${timeShift} ms</td>
-                    <td><pre class="log-item json">${JSON.stringify(item.logItem)}</pre></td>
-                </tr>`
+        return ``
     }
 
-    private getFileShortPath(workspace: string, file: string) {
-        const possiblePrefixes = ['file:///', 'file://', '']; // should be sorted by lenght desc
-        for (let i = 0; i < possiblePrefixes.length; i++) {
-            const prefix = possiblePrefixes[i];
-            if (file.startsWith(prefix)) {
-                const trimFile = file.slice(prefix.length);
-                const short = path.relative(workspace, trimFile);
-                if (short.length < file.length) {
-                    return short;
-                }                    
-            }
-        }
-        return file;
-    }*/
+    */
 }
 
 export function encodeGid(gid: string) {
