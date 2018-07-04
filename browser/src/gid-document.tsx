@@ -1,9 +1,26 @@
-const myCoolMessage = 'It works!';
-const element = <div>Hey, {myCoolMessage}</div>;
+function renderData(data: {gid: string, logItems: any[]}) {
 
-document.addEventListener("DOMContentLoaded", () => {
-    let container = document.getElementById('root');
-    console.log(container);
+    let itemsToProcess = _.orderBy(data.logItems, ['logItem.time', 'line']);
 
-    ReactDOM.render(element, container);
-});
+    let startTime: number = null;
+    if (itemsToProcess.length) {
+        startTime = Date.parse(itemsToProcess[0].logItem.time);
+    }
+
+    const doc = <div>
+        <Title gid={data.gid} />
+        <StartTime time={startTime} />
+    </div>;
+    
+
+    document.addEventListener("DOMContentLoaded", () => {
+        ReactDOM.render(doc, document.getElementById('root'));
+    });
+}
+
+const Title = (props: {gid: string}) => <h1>gid report for <b>{props.gid}</b></h1>;
+
+const StartTime = (props: { time: number }) => 
+    <div>
+        Started at {new Date(props.time).toUTCString()}
+    </div>;

@@ -1,6 +1,5 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as _ from 'lodash';
 
 interface ILogItem {
     uri: string;
@@ -20,37 +19,32 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
         return vscode.commands.executeCommand('pridolog.server.getLogItemsForGid', gid)
             .then((logItems: ILogItem[]) => {
 
-                let tableHtml = '';
-                let itemsToProcess = _.orderBy(logItems, ['logItem.time', 'line']);
+                // let tableHtml = '';
 
-                let startTime: number = null;
-                if (itemsToProcess.length) {
-                    startTime = Date.parse(itemsToProcess[0].logItem.time);
-                }
+                // while (itemsToProcess.length > 0) {
+                //     let lastUri: string = undefined;
+                //     const itemsChain = _(itemsToProcess)
+                //         .takeWhile(item => {
+                //             const result = lastUri === undefined || lastUri === item.uri;
+                //             lastUri = item.uri;                        
+                //             return result;
+                //         })
+                //         .value();
 
-                while (itemsToProcess.length > 0) {
-                    let lastUri: string = undefined;
-                    const itemsChain = _(itemsToProcess)
-                        .takeWhile(item => {
-                            const result = lastUri === undefined || lastUri === item.uri;
-                            lastUri = item.uri;                        
-                            return result;
-                        })
-                        .value();
+                //     const filePath = this.getFileShortPath(
+                //         vscode.workspace.workspaceFolders[0].uri.fsPath,
+                //         decodeURI(itemsChain[0].uri));
+                //     tableHtml += `<tr><td colSpan="4"><h2>${filePath}</h2></td></tr>\n`;
 
-                    const filePath = this.getFileShortPath(
-                        vscode.workspace.workspaceFolders[0].uri.fsPath,
-                        decodeURI(itemsChain[0].uri));
-                    tableHtml += `<tr><td colSpan="4"><h2>${filePath}</h2></td></tr>\n`;
+                //     itemsChain.forEach(item => {
+                //         tableHtml += this.getLogItemHtml(item, startTime) + '\n';
+                //     });
 
-                    itemsChain.forEach(item => {
-                        tableHtml += this.getLogItemHtml(item, startTime) + '\n';
-                    });
-
-                    itemsToProcess = _.drop(itemsToProcess, itemsChain.length);
-                }
+                //     itemsToProcess = _.drop(itemsToProcess, itemsChain.length);
+                // }
 
                 const browserPath = path.join(__dirname, '../../browser');
+                var data = { gid, logItems };
 
                 return `<!DOCTYPE html>
                     <html lang="en">
@@ -58,7 +52,9 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                         <script src="${path.join(browserPath, './node_modules/react/umd/react.development.js')}"></script>
                         <script src="${path.join(browserPath, './node_modules/react-dom/umd/react-dom.development.js')}"></script>
 
-                        <!--<script src="${path.join(browserPath, './node_modules/highlight.js/lib/highlight.js')}"></script>
+                        <script src="${path.join(browserPath, './node_modules/lodash/lodash.min.js')}"></script>
+
+                        <script src="${path.join(browserPath, './node_modules/highlight.js/lib/highlight.js')}"></script>
                         <script>
                             // hack to load node module with json language
                             var module = {};
@@ -68,12 +64,14 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                             // register loaded language
                             hljs.registerLanguage('json', module.exports);
                             delete module;
-                        </script>-->
+                        </script>
+
+                        <link rel="stylesheet" href="${path.join(browserPath, './node_modules/highlight.js/styles/vs2015.css')}"></link>
 
                         <script src="${path.join(browserPath, './src/gid-document.js')}"></script>
-
-                        <!--<link rel="stylesheet" href="${path.join(browserPath, './node_modules/highlight.js/styles/vs2015.css')}"></link>-->
                         <script>
+                            var data = ${JSON.stringify(data)};
+                            renderData(data);
 /*    $(function() {
         $("button.plus").click(function(e) {
             var parent = $(e.target).parent().parent();
@@ -100,13 +98,10 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                     <body>
                         <div id="root"></div>
 
-                        <!--<h1>gid report for <b>${gid}</b></h1>
-                        <div>
-                            Started at ${startTime}
-                        </div>
+                        <!--
                         <div>
                             <table>
-                            ${tableHtml}
+                            
                             </table>
                         </div>-->
                     </body>`;
@@ -120,7 +115,7 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
             });
     }
 
-    private getLogItemHtml(item: ILogItem, startTime: number): string {
+    /*private getLogItemHtml(item: ILogItem, startTime: number): string {
         const openParameters = {
             uri: item.uri,
             line: item.line
@@ -149,7 +144,7 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
             }
         }
         return file;
-    }
+    }*/
 }
 
 export function encodeGid(gid: string) {
