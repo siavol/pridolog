@@ -86,16 +86,32 @@ const LogItemRow = (props: { logItem: ILogItem, startTime: number }) => {
     const logTime = Date.parse(props.logItem.logItem.time);
     const timeShift = logTime.valueOf() - props.startTime;
 
-    const logLine = JSON.stringify(props.logItem.logItem);
-
     return <tr>
-        <td>
-            <button>+</button>
-        </td>
         <td>
             <a href={goToSourceHref}><pre>{props.logItem.line}:</pre></a>
         </td>
         <td>+{timeShift} ms</td>
-        <td><pre className="log-item json">{logLine}</pre></td>
+        <td>
+            <button>+</button>
+        </td>
+        <td>
+            <LogLineText logItem={props.logItem} />
+        </td>
     </tr>
 };
+
+class LogLineText extends React.Component {
+    props: {
+        logItem: ILogItem;
+    }
+
+    public render() {
+        const logLine = JSON.stringify(this.props.logItem.logItem);
+        return <pre className="log-item json">{logLine}</pre>;
+    }
+
+    public componentDidMount() {
+        var current = ReactDOM.findDOMNode(this);
+        hljs.highlightBlock(current);
+    }
+}

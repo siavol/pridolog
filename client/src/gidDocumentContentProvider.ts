@@ -103,19 +103,6 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                     ${rejectedReason}`;
             });
     }
-
-    /*private getLogItemHtml(item: ILogItem, startTime: number): string {
-        const openParameters = {
-            uri: item.uri,
-            line: item.line
-        };
-        const logTime = Date.parse(item.logItem.time);
-        const timeShift = logTime - startTime;
-        const goToSourceHref = encodeURI(`command:pridolog.open?${JSON.stringify(openParameters)}`);
-        return ``
-    }
-
-    */
 }
 
 export function encodeGid(gid: string) {
