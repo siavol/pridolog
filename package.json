@@ -16,6 +16,8 @@
 		"watch:client": "tsc -w -p client/tsconfig.json",
 		"compile:server": "cd server && npm run installServer && cd .. && tsc -p server/tsconfig.json",
 		"watch:server": "cd server && npm run installServer && cd .. && tsc -w -p server/tsconfig.json",
+		"compile:browser": "cd browser && npm run installBrowser && cd .. && tsc -p browser/tsconfig.json",
+		"watch:browser": "cd browser && npm run installBrowser && cd .. && tsc -w -p browser/tsconfig.json",
 		"test:unit": "mocha client/server/test",
 		"package": "cd client && vsce package && cd .."
 	},

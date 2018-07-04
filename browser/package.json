@@ -1,0 +1,19 @@
+{
+  "name": "pridolog",
+  "version": "0.0.4",
+  "description": "Implementation of a PrizmDoc log language server.",
+  "main": "index.js",
+  "scripts": {
+    "installBrowser": "node installBrowser.js ../client/browser"
+  },
+  "author": "Ilya Shestakov",
+  "license": "MIT",
+  "dependencies": {
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1"
+  },
+  "devDependencies": {
+    "@types/react": "^16.4.6",
+    "@types/react-dom": "^16.0.6"
+  }
+}

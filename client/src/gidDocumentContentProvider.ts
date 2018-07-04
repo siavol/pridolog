@@ -50,30 +50,31 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                     itemsToProcess = _.drop(itemsToProcess, itemsChain.length);
                 }
 
+                const browserPath = path.join(__dirname, '../../browser');
+
                 return `<!DOCTYPE html>
                     <html lang="en">
                     <head>
-                        <script src="${path.join(__dirname, '../../node_modules/jquery/dist/jquery.min.js')}"></script>
+                        <script src="${path.join(browserPath, './node_modules/react/umd/react.development.js')}"></script>
+                        <script src="${path.join(browserPath, './node_modules/react-dom/umd/react-dom.development.js')}"></script>
 
-                        <script src="${path.join(__dirname, '../../node_modules/highlight.js/lib/highlight.js')}"></script>
+                        <!--<script src="${path.join(browserPath, './node_modules/highlight.js/lib/highlight.js')}"></script>
                         <script>
                             // hack to load node module with json language
                             var module = {};
                         </script>
-                        <script src="${path.join(__dirname, '../../node_modules/highlight.js/lib/languages/json.js')}"></script>
+                        <script src="${path.join(browserPath, './node_modules/highlight.js/lib/languages/json.js')}"></script>
                         <script>
                             // register loaded language
                             hljs.registerLanguage('json', module.exports);
                             delete module;
-                        </script>
+                        </script>-->
 
-                        <link rel="stylesheet" href="${path.join(__dirname, '../../node_modules/highlight.js/styles/vs2015.css')}"></link>
+                        <script src="${path.join(browserPath, './src/gid-document.js')}"></script>
+
+                        <!--<link rel="stylesheet" href="${path.join(browserPath, './node_modules/highlight.js/styles/vs2015.css')}"></link>-->
                         <script>
-                            //hljs.initHighlightingOnLoad();
-                            //hljs.registerLanguage('json'
-                        </script>
-                        <script>
-    $(function() {
+/*    $(function() {
         $("button.plus").click(function(e) {
             var parent = $(e.target).parent().parent();
             var logItemPre = parent.find("pre.log-item");
@@ -93,11 +94,13 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
         $('pre.log-item').each(function(i, block) {
             hljs.highlightBlock(block);
         });
-    });
+    });*/
                         </script>
                     </head>
                     <body>
-                        <h1>gid report for <b>${gid}</b></h1>
+                        <div id="root"></div>
+
+                        <!--<h1>gid report for <b>${gid}</b></h1>
                         <div>
                             Started at ${startTime}
                         </div>
@@ -105,7 +108,7 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                             <table>
                             ${tableHtml}
                             </table>
-                        </div>
+                        </div>-->
                     </body>`;
             }, rejectedReason => {
                 return `<!DOCTYPE html>
