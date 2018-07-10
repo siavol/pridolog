@@ -31,7 +31,7 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                 return `<!DOCTYPE html>
                     <html lang="en">
                     <head>
-                        <script src="${path.join(__dirname, '../../browser/gidDocument.js')}"></script>
+                        <script src="${path.resolve(__dirname, browserPath, './gidDocument.js')}"></script>
                         <script>
                             var data = ${JSON.stringify(data)};
                             gidDocument.renderData(data);

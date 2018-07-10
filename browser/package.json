@@ -4,7 +4,6 @@
   "description": "PrizmDoc log html documents.",
   "main": "index.js",
   "scripts": {
-    "installBrowser": "node installBrowser.js ../client/browser",
     "build": "webpack"
   },
   "author": "Ilya Shestakov",
