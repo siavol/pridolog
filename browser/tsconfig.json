@@ -5,7 +5,7 @@
 		"noImplicitAny": true,
 		"noImplicitReturns": true,		
 		"target": "es6",
-		"module": "none",
+		"module": "es6",
 		"moduleResolution": "node",
 		"rootDir": ".",
 		"outDir": "../client/browser",

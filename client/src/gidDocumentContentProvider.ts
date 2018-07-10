@@ -21,11 +21,6 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
             .then((logItems: ILogItem[]) => {
 
                 const browserPath = path.join(__dirname, '../../browser');
-                const documentFileLinks = [
-                    './gid-document.js',
-                    './grouped-log-items.js'
-                ].map(file => `<script src="${path.join(browserPath, 'src', file)}"></script>`);
-
                 const orderedLogItems = _.orderBy(logItems, ['logItem.time', 'line']);
                 var data = {
                     workspacePath: vscode.workspace.workspaceFolders[0].uri.fsPath,
@@ -36,30 +31,13 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
                 return `<!DOCTYPE html>
                     <html lang="en">
                     <head>
-                        <script src="${path.join(browserPath, './node_modules/react/umd/react.development.js')}"></script>
-                        <script src="${path.join(browserPath, './node_modules/react-dom/umd/react-dom.development.js')}"></script>
-
-                        <script src="${path.join(browserPath, './node_modules/lodash/lodash.min.js')}"></script>
-
-                        <script src="${path.join(browserPath, './node_modules/highlight.js/lib/highlight.js')}"></script>
-                        <script>
-                            // hack to load node module with json language
-                            var module = {};
-                        </script>
-                        <script src="${path.join(browserPath, './node_modules/highlight.js/lib/languages/json.js')}"></script>
-                        <script>
-                            // register loaded language
-                            hljs.registerLanguage('json', module.exports);
-                            delete module;
-                        </script>
-
-                        ${documentFileLinks.join('\n')}
+                        <script src="${path.join(__dirname, '../../browser/gidDocument.js')}"></script>
 
                         <link rel="stylesheet" href="${path.join(browserPath, './node_modules/highlight.js/styles/vs2015.css')}"></link>
 
                         <script>
                             var data = ${JSON.stringify(data)};
-                            renderData(data);
+                            gidDocument.renderData(data);
                         </script>
                     </head>
                     <body>

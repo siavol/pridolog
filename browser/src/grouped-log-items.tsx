@@ -1,9 +1,16 @@
+import * as React from "react";
+import * as ReactDOM from 'react-dom'
+import * as _ from 'lodash'
+import * as hljs from 'highlight.js'
+
+import { ILogItem } from './gid-document'
+
 interface ILogItemsGroup { 
     uri: string; 
     logItems: ILogItem[]; 
 }
 
-class GroupedLogItems extends React.Component<
+export class GroupedLogItems extends React.Component<
 {
     logItems: ILogItem[];
     workspacePath: string;
