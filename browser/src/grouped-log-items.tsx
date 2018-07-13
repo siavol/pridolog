@@ -3,7 +3,8 @@ import * as ReactDOM from 'react-dom'
 import * as _ from 'lodash'
 import * as hljs from 'highlight.js'
 
-require('../node_modules/highlight.js/styles/vs2015.css')
+require('../node_modules/highlight.js/styles/vs2015.css');
+require('./styles/gid-document.scss');
 
 import { ILogItem } from './gid-document'
 
