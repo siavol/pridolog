@@ -2,11 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as _ from 'lodash';
 
-interface ILogItem {
-    uri: string;
-    line: number;
-    logItem: any;
-}
+import { ILogItem } from '../../common/logItemInterfaces'
 
 export class GidDocumentContentProvider implements vscode.TextDocumentContentProvider {
 

@@ -6,7 +6,7 @@ import * as hljs from 'highlight.js'
 require('../node_modules/highlight.js/styles/vs2015.css');
 require('./styles/grouped-log-items.scss');
 
-import { ILogItem } from './gid-document'
+import { ILogItem } from '../../common/logItemInterfaces'
 
 interface ILogItemsGroup { 
     uri: string; 
