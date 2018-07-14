@@ -4,7 +4,7 @@ import * as _ from 'lodash'
 import * as hljs from 'highlight.js'
 
 require('../node_modules/highlight.js/styles/vs2015.css');
-require('./styles/gid-document.scss');
+require('./styles/grouped-log-items.scss');
 
 import { ILogItem } from './gid-document'
 
@@ -68,23 +68,26 @@ export class GroupedLogItems extends React.Component<
 
         const rows = _.map(this.getLogItemGroups(), 
             group => {
-                const fileRow = <LogFileRow group={group} startTime={this.props.startTime} />;
+                const fileRow = <LogFileRow group={group} startTime={this.props.startTime} 
+                    key={`${group.uri}:${group.logItems[0].line}`} />;
                 const lines = group.logItems.map(logItem => 
-                    <LogItemRow logItem={logItem} startTime={this.props.startTime} />);
+                    <LogItemRow logItem={logItem} startTime={this.props.startTime} 
+                        key={`item_${logItem.uri}:${logItem.line}`}/>);
                 return [fileRow, ...lines];
             });
 
-        return <div>
-            <table>
-                {_.flatten(rows)}
-            </table>
+        return <div className="log-items-container">
+            {_.flatten(rows)}
         </div>;
     }
 }
 
-const LogFileRow = (props: { group: ILogItemsGroup; startTime: number }) => <tr>
-    <td colSpan={4}><h2>{decodeURI(props.group.uri)}</h2></td>
-</tr>;
+const LogFileRow = (props: { group: ILogItemsGroup; startTime: number }) => {
+    const decodedUri = decodeURI(props.group.uri);
+    return <div className="log-title">
+        <h2>{decodedUri}</h2>
+    </div>;
+}
 
 class LogItemRow extends React.Component<
     {
@@ -105,38 +108,36 @@ class LogItemRow extends React.Component<
     }
     
     public render() {
-        const logTime = Date.parse(this.props.logItem.logItem.time);
-        const timeShift = logTime.valueOf() - this.props.startTime;
-
-        return <tr>
-            <td>
-                <LinkToLogLine logItem={this.props.logItem} />
-            </td>
-            <td>+{timeShift} ms</td>
-            <td>
-                <ExpandButton expanded={this.state.expanded} onClick={this.onExpandClick} />
-            </td>
-            <td>
-                <LogLineText logItem={this.props.logItem} expanded={this.state.expanded} />
-            </td>
-        </tr>
+        const key = `${this.props.logItem.uri}:${this.props.logItem.line}`;
+        return [
+            <LinkToLogLine logItem={this.props.logItem} key={"link_"+key} />,
+            <LogTime logItem={this.props.logItem} startTime={this.props.startTime} key={"time_" + key} />,
+            <ExpandButton expanded={this.state.expanded} onClick={this.onExpandClick} key={"plus_" + key} />,
+            <LogLineText logItem={this.props.logItem} expanded={this.state.expanded} key={"json_" + key} />
+        ];
     };
 }
 
 const ExpandButton = (props: {expanded: boolean, onClick?: () => any}) => {
-    return <button onClick={props.onClick}>{props.expanded ? '-' : '+'}</button>;
+    return <button onClick={props.onClick} className="log-item-plus">{props.expanded ? '-' : '+'}</button>;
 }
 
-const LinkToLogLine = (props: {logItem: ILogItem}) => {
+const LinkToLogLine = (props: { logItem: ILogItem}) => {
     const openParameters = {
         uri: props.logItem.uri,
         line: props.logItem.line
     };
     const goToSourceHref = encodeURI(`command:pridolog.open?${JSON.stringify(openParameters)}`);
-    return <a href={goToSourceHref}>
-        <pre>{props.logItem.line}:</pre>
-    </a>;
+    return <a href={goToSourceHref} className="log-item-number">
+            <pre>{props.logItem.line}:</pre>
+        </a>;
 }
+
+const LogTime = (props: { logItem: ILogItem, startTime: number}) => {
+    const logTime = Date.parse(props.logItem.logItem.time);
+    const timeShift = logTime.valueOf() - props.startTime;
+    return <div className="log-item-time">+{timeShift} ms</div>;
+};
 
 class LogLineText extends React.Component<
 {
@@ -147,7 +148,7 @@ class LogLineText extends React.Component<
         const logLine = this.props.expanded 
             ? JSON.stringify(this.props.logItem.logItem, undefined, 2)
             : JSON.stringify(this.props.logItem.logItem);
-        return <pre className="log-item json">{logLine}</pre>;
+        return <pre className="log-item-json json">{logLine}</pre>;
     }
 
     public componentDidMount() {

@@ -34,7 +34,9 @@ export function renderData(data: {
     });
 }
 
-const Title = (props: {gid: string}) => <h1>gid report for <i>{props.gid}</i></h1>;
+const Title = (props: {gid: string}) => <header>
+    <h1>gid report for <strong>{props.gid}</strong></h1>
+</header>;
 
 const StartTime = (props: { time: number }) => 
     <div>
