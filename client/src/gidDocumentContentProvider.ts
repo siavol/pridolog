@@ -21,7 +21,12 @@ export class GidDocumentContentProvider implements vscode.TextDocumentContentPro
             .then((logItems: ILogItem[]) => {
 
                 const browserPath = path.join(__dirname, '../../browser');
-                const orderedLogItems = _.orderBy(logItems, ['logItem.time', 'line']);
+                const orderedLogItems = _.orderBy(logItems, [
+                    item => item.logItem.time.replace(
+                        /(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2}:\d{2}\.\d{3})\d/g,
+                        (_match: string, date: string, time: string) => { return `${date}T${time}Z`; }), 
+                    'line'
+                ]);
                 var data = {
                     workspacePath: vscode.workspace.workspaceFolders[0].uri.fsPath,
                     gid, 
