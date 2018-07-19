@@ -2,13 +2,7 @@ import * as React from "react";
 import * as ReactDOM from 'react-dom'
 
 import { GroupedLogItems } from './grouped-log-items'
-
-// TODO: move common interfaces to single place
-export interface ILogItem {
-    uri: string;
-    line: number;
-    logItem: any;
-}
+import { ILogItem } from '../../common/logItemInterfaces'
 
 export function renderData(data: { 
     gid: string, 
