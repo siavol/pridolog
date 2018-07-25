@@ -10,7 +10,11 @@ import { ILogItem } from '../../common/logItemInterfaces'
 
 interface ILogItemsGroup { 
     uri: string; 
-    logItems: ILogItem[]; 
+    logItems: IExpandableLogItem[]; 
+}
+
+interface IExpandableLogItem extends ILogItem {
+    expanded: boolean;
 }
 
 export class GroupedLogItems extends React.Component<
@@ -18,7 +22,13 @@ export class GroupedLogItems extends React.Component<
     logItems: ILogItem[];
     workspacePath: string;
     startTime: number;
+},
+{
+    groups: ILogItemsGroup[];
 }> {
+    state = {
+        groups: this.getLogItemGroups()
+    };
 
     private getLogItemGroups() {
         let result: ILogItemsGroup[] = [];
@@ -32,6 +42,7 @@ export class GroupedLogItems extends React.Component<
                     lastUri = item.uri;
                     return result;
                 })
+                .map(item => _.extend({ expanded: false }, item))
                 .value();
             const shortUri = this.getFileShortPath(
                 this.props.workspacePath, 
@@ -64,14 +75,35 @@ export class GroupedLogItems extends React.Component<
         return file;
     }
 
+    expandLogItem = (group: ILogItemsGroup, logItem: IExpandableLogItem) => {
+        this.setState(prevState => {
+            const groupIndex = prevState.groups.indexOf(group);
+
+            const logGroupClone = _.clone(group);
+            const logItemIndex = logGroupClone.logItems.indexOf(logItem);
+            const logItemClone = _.clone(logItem);
+
+            logItemClone.expanded = !logItem.expanded;
+            logGroupClone.logItems[logItemIndex] = logItemClone;
+
+            const groupsClone = _.clone(prevState.groups);
+            groupsClone[groupIndex] = logGroupClone;
+
+            return {
+                groups: groupsClone
+            };
+        });
+    }
+
     public render() {
 
-        const rows = _.map(this.getLogItemGroups(), 
+        const rows = _.map(this.state.groups, 
             group => {
                 const fileRow = <LogFileRow group={group} startTime={this.props.startTime} 
                     key={`${group.uri}:${group.logItems[0].line}`} />;
                 const lines = group.logItems.map(logItem => 
-                    <LogItemRow logItem={logItem} startTime={this.props.startTime} 
+                    <LogItemRow logItem={logItem} startTime={this.props.startTime}
+                        onExpanded={() => this.expandLogItem(group, logItem)}
                         key={`item_${logItem.uri}:${logItem.line}`}/>);
                 return [fileRow, ...lines];
             });
@@ -82,29 +114,28 @@ export class GroupedLogItems extends React.Component<
     }
 }
 
-const LogFileRow = (props: { group: ILogItemsGroup; startTime: number }) => {
-    const decodedUri = decodeURI(props.group.uri);
-    return <div className="log-title">
-        <h2>{decodedUri}</h2>
-    </div>;
+export class LogFileRow extends React.Component<{ 
+    group: ILogItemsGroup; 
+    startTime: number;
+}> {
+
+    public render() {
+        const decodedUri = decodeURI(this.props.group.uri);
+        return <div className="log-title">
+            <h2>{decodedUri} <button>++</button></h2>            
+        </div>;
+    }
 }
 
 class LogItemRow extends React.Component<
     {
-        logItem: ILogItem,
-        startTime: number
-    },
-    {
-        expanded: boolean
+        logItem: IExpandableLogItem;
+        startTime: number;
+        onExpanded: () => any;
     }> { 
-    state = {
-        expanded: false
-    };
 
     onExpandClick = () => {
-        this.setState({
-            expanded: !this.state.expanded            
-        });
+        this.props.onExpanded();
     }
     
     public render() {
@@ -112,8 +143,8 @@ class LogItemRow extends React.Component<
         return [
             <LinkToLogLine logItem={this.props.logItem} key={"link_"+key} />,
             <LogTime logItem={this.props.logItem} startTime={this.props.startTime} key={"time_" + key} />,
-            <ExpandButton expanded={this.state.expanded} onClick={this.onExpandClick} key={"plus_" + key} />,
-            <LogLineText logItem={this.props.logItem} expanded={this.state.expanded} key={"json_" + key} />
+            <ExpandButton expanded={this.props.logItem.expanded} onClick={this.onExpandClick} key={"plus_" + key} />,
+            <LogLineText logItem={this.props.logItem} expanded={this.props.logItem.expanded} key={"json_" + key} />
         ];
     };
 }
