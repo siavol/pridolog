@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from 'react-dom'
 
-import { GroupedLogItems } from './grouped-log-items'
+import { LogItemGroupList } from './grouped-log-items'
 import { ILogItem } from '../../common/logItemInterfaces'
 
 export function renderData(data: { 
@@ -17,7 +17,7 @@ export function renderData(data: {
     const doc = <div>
         <Title gid={data.gid} />
         <StartTime time={startTime} />
-        <GroupedLogItems logItems={data.logItems} 
+        <LogItemGroupList logItems={data.logItems} 
             workspacePath={data.workspacePath}
             startTime={startTime} />
     </div>;
