@@ -68,7 +68,8 @@ export class LogItemGroupList extends React.Component<
         const groups = this.getLogItemGroups();
         const rows = _.map(groups, 
             group => {
-                return <LogItemGroup uri={group.uri} logItems={group.logItems} startTime={this.props.startTime} />;
+                return <LogItemGroup uri={group.uri} logItems={group.logItems} startTime={this.props.startTime} 
+                    key={`group_${group.uri}:${group.logItems[0].line}`}/>;
             });
 
         return <div className="log-items-container">
@@ -82,7 +83,7 @@ class LogItemGroup extends React.Component<{
     logItems: ILogItem[];
     startTime: number;
 },{
-    allExpanded: boolean;
+    allExpanded: boolean | null;
     items: { logItem: ILogItem; expanded: boolean; }[]
 }>{
     state = {
@@ -103,14 +104,46 @@ class LogItemGroup extends React.Component<{
             updatedItemClone.expanded = !updatedItemClone.expanded;
             itemsClone[itemIndex] = updatedItemClone;
 
+            let allExpanded = null;
+            if (itemsClone[0].expanded) {
+                if (_(itemsClone).drop(1).findIndex(i => !i.expanded) < 0) {
+                    allExpanded = true;
+                }
+            } else {
+                if (_(itemsClone).drop(1).findIndex(i => i.expanded) < 0) {
+                    allExpanded = false;
+                }
+            }
+
             return {
-                items: itemsClone
+                items: itemsClone,
+                allExpanded
             };
+        });
+    }
+
+    expandGroup = () => {
+        this.setState(prevState => {
+            const allExpanded = !prevState.allExpanded;
+            const items = prevState.items.map(item => {
+                if (item.expanded === allExpanded) {
+                    return item;
+                } else {
+                    return {
+                        logItem: item.logItem,
+                        expanded: allExpanded
+                    };
+                }
+            });
+
+            return { items, allExpanded };
         });
     }
 
     public render() {
         const fileRow = <LogFileRow uri={this.props.uri}
+            expanded={this.state.allExpanded}
+            onExpanded={() => this.expandGroup()}
             key={`${this.props.uri}:${this.props.logItems[0].line}`} />;
         const lines = this.state.items.map(item =>
             <LogItemRow logItem={item.logItem} startTime={this.props.startTime}
@@ -123,12 +156,22 @@ class LogItemGroup extends React.Component<{
 
 class LogFileRow extends React.Component<{ 
     uri: string;
+    expanded: boolean | null;
+    onExpanded: () => any;
 }> {
 
-    public render() {
+    public render() {        
         const decodedUri = decodeURI(this.props.uri);
+        let buttonText: string;
+        if (this.props.expanded === true) {
+            buttonText = '--';
+        } else if (this.props.expanded === false) {
+            buttonText = '++';
+        } else {
+            buttonText = '..';
+        }
         return <div className="log-title">
-            <h2>{decodedUri} <button>++</button></h2>            
+            <h2>{decodedUri} <button onClick={this.props.onExpanded}>{buttonText}</button></h2>
         </div>;
     }
 }
