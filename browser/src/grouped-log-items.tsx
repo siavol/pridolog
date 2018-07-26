@@ -84,10 +84,12 @@ class LogItemGroup extends React.Component<{
     startTime: number;
 },{
     allExpanded: boolean | null;
+    itemsHidden: boolean;
     items: { logItem: ILogItem; expanded: boolean; }[]
 }>{
     state = {
         allExpanded: false,
+        itemsHidden: false,
         items: this.props.logItems.map(logItem => ({ expanded: false, logItem }))
     };
 
@@ -140,40 +142,58 @@ class LogItemGroup extends React.Component<{
         });
     }
 
+    hideItems = () => {
+        this.setState(prevState => {
+            return {
+                itemsHidden: !prevState.itemsHidden
+            };
+        });
+    }
+
     public render() {
         const fileRow = <LogFileRow uri={this.props.uri}
-            expanded={this.state.allExpanded}
+            allExpanded={this.state.allExpanded}
+            itemsHidden={this.state.itemsHidden}
             onExpanded={() => this.expandGroup()}
+            onHide={() => this.hideItems()}
             key={`${this.props.uri}:${this.props.logItems[0].line}`} />;
-        const lines = this.state.items.map(item =>
-            <LogItemRow logItem={item.logItem} startTime={this.props.startTime}
-                expanded={item.expanded}
-                onExpanded={() => this.expandLogItem(item)}
-                key={`item_${item.logItem.uri}:${item.logItem.line}`} />);
-        return [fileRow, ...lines];
+
+        if (this.state.itemsHidden) {
+            return fileRow;
+        } else {
+            const lines = this.state.items.map(item =>
+                <LogItemRow logItem={item.logItem} startTime={this.props.startTime}
+                    expanded={item.expanded}
+                    onExpanded={() => this.expandLogItem(item)}
+                    key={`item_${item.logItem.uri}:${item.logItem.line}`} />);
+            return [fileRow, ...lines];
+        }
     }
 }
 
-class LogFileRow extends React.Component<{ 
+const LogFileRow = (props: { 
     uri: string;
-    expanded: boolean | null;
+    allExpanded: boolean | null;
+    itemsHidden: boolean;
     onExpanded: () => any;
-}> {
-
-    public render() {        
-        const decodedUri = decodeURI(this.props.uri);
-        let buttonText: string;
-        if (this.props.expanded === true) {
-            buttonText = '--';
-        } else if (this.props.expanded === false) {
-            buttonText = '++';
-        } else {
-            buttonText = '..';
-        }
-        return <div className="log-title">
-            <h2>{decodedUri} <button onClick={this.props.onExpanded}>{buttonText}</button></h2>
-        </div>;
+    onHide: () => any;
+}) => {
+    const decodedUri = decodeURI(props.uri);
+    let buttonText: string;
+    if (props.allExpanded === true) {
+        buttonText = '--';
+    } else if (props.allExpanded === false) {
+        buttonText = '++';
+    } else {
+        buttonText = '..';
     }
+    return <div className="log-title">
+        <h2>
+            <button onClick={props.onHide}>{props.itemsHidden ? '>' : '_'}</button>
+            <span>{decodedUri}</span> 
+            <button onClick={props.onExpanded}>{buttonText}</button>
+        </h2>
+    </div>;
 }
 
 class LogItemRow extends React.Component<
