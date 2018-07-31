@@ -3,3 +3,5 @@ node_modules
 client/server
 client/browser
 *.vsix
+
+browser/bundle-report.html

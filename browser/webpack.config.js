@@ -1,4 +1,5 @@
-const path = require('path')
+const path = require('path');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
     entry: { 
@@ -30,5 +31,12 @@ module.exports = {
         filename: '[name].js',
         path: path.resolve(__dirname, '../client/browser'),
         library: '[name]'
-    }
+    },
+    plugins: [
+        new BundleAnalyzerPlugin({
+            analyzerMode: 'static',
+            reportFilename: '../../browser/bundle-report.html',
+            openAnalyzer: false
+        })
+    ]
 };
