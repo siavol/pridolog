@@ -6,9 +6,8 @@ import * as hljs from 'highlight.js'
 require('../node_modules/highlight.js/styles/vs2015.css');
 require('./styles/grouped-log-items.scss');
 
-import Button from "@material-ui/core/Button"
-import UnfoldLess from '@material-ui/icons/UnfoldLess'
-import UnfoldMore from '@material-ui/icons/UnfoldMore'
+import UnfoldLess from 'svg-react-loader?name=UnfoldLess!../node_modules/material-design-icons/navigation/svg/production/ic_unfold_less_24px.svg'
+import UnfoldMore from 'svg-react-loader?name=UnfoldMore!../node_modules/material-design-icons/navigation/svg/production/ic_unfold_more_24px.svg'
 
 import { ILogItem } from '../../common/logItemInterfaces'
 
@@ -193,9 +192,9 @@ const LogFileRow = (props: {
     }
     return <div className="log-title">
         <h2>
-            <Button onClick={props.onHide}>
+            <button onClick={props.onHide}>
                 {props.itemsHidden ? <UnfoldMore /> : <UnfoldLess />}
-            </Button>
+            </button>
             <span>{decodedUri}</span> 
             <button onClick={props.onExpanded}>{buttonText}</button>
         </h2>
