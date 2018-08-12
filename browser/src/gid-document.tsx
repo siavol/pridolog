@@ -1,6 +1,8 @@
 import * as React from "react";
 import * as ReactDOM from 'react-dom'
 
+require('./styles/gid-document.scss');
+
 import { LogItemGroupList } from './grouped-log-items'
 import { ILogItem } from '../../common/logItemInterfaces'
 

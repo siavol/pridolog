@@ -1,0 +1,23 @@
+button {
+    background: var(--vscode-button-background);
+    border-style: none;
+    border-radius: 2px;
+    padding: 0px;
+    margin: 0px 3px;
+}
+
+button:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+button svg {
+    fill: var(--vscode-button-foreground);
+}
+
+button.navigation {
+    background: transparent;
+}
+
+a {
+    color: var(--vscode-editorLink-activeForeground);
+}

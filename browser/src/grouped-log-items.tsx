@@ -6,8 +6,11 @@ import * as hljs from 'highlight.js'
 require('../node_modules/highlight.js/styles/vs2015.css');
 require('./styles/grouped-log-items.scss');
 
-import UnfoldLess from 'svg-react-loader?name=UnfoldLess!../node_modules/material-design-icons/navigation/svg/production/ic_unfold_less_24px.svg'
-import UnfoldMore from 'svg-react-loader?name=UnfoldMore!../node_modules/material-design-icons/navigation/svg/production/ic_unfold_more_24px.svg'
+import UnfoldLess from 'svg-react-loader?name=UnfoldLess!../node_modules/material-design-icons/navigation/svg/production/ic_unfold_less_18px.svg'
+import UnfoldMore from 'svg-react-loader?name=UnfoldMore!../node_modules/material-design-icons/navigation/svg/production/ic_unfold_more_18px.svg'
+import ChevronRight from 'svg-react-loader?name=ChevronRight!../node_modules/material-design-icons/navigation/svg/production/ic_chevron_right_18px.svg'
+import ExpandLess from 'svg-react-loader?name=ExpandLess!../node_modules/material-design-icons/navigation/svg/production/ic_expand_less_18px.svg'
+import ExpandMore from 'svg-react-loader?name=ExpandMore!../node_modules/material-design-icons/navigation/svg/production/ic_expand_more_18px.svg'
 
 import { ILogItem } from '../../common/logItemInterfaces'
 
@@ -182,21 +185,21 @@ const LogFileRow = (props: {
     onHide: () => any;
 }) => {
     const decodedUri = decodeURI(props.uri);
-    let buttonText: string;
+    let icon: JSX.Element;
     if (props.allExpanded === true) {
-        buttonText = '--';
+        icon = <ExpandLess />;
     } else if (props.allExpanded === false) {
-        buttonText = '++';
+        icon = <ExpandMore />;
     } else {
-        buttonText = '..';
+        icon = <ChevronRight />;
     }
     return <div className="log-title">
         <h2>
-            <button onClick={props.onHide}>
+            <button className='navigation' onClick={props.onHide}>
                 {props.itemsHidden ? <UnfoldMore /> : <UnfoldLess />}
             </button>
             <span>{decodedUri}</span> 
-            <button onClick={props.onExpanded}>{buttonText}</button>
+            <button className='navigation' onClick={props.onExpanded}>{icon}</button>
         </h2>
     </div>;
 }
@@ -225,7 +228,9 @@ class LogItemRow extends React.Component<
 }
 
 const ExpandButton = (props: {expanded: boolean, onClick?: () => any}) => {
-    return <button onClick={props.onClick} className="log-item-plus">{props.expanded ? '-' : '+'}</button>;
+    return <button onClick={props.onClick} className="log-item-plus navigation">
+        {props.expanded ? <ExpandLess /> : <ExpandMore />}
+    </button>;
 }
 
 const LinkToLogLine = (props: { logItem: ILogItem}) => {
