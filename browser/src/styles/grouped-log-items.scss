@@ -1,0 +1,29 @@
+.log-items-container {
+    display: grid;
+    grid-template-columns: auto auto auto 1fr;
+    grid-column-gap: 5px;
+    align-items: baseline;
+}
+
+.log-title {
+    grid-column-start: 1;
+    grid-column-end: 5;
+}
+
+.log-item-time {
+    white-space: nowrap;
+    margin-top: 9px;
+}
+
+.log-item-plus {
+    margin-top: 7px;
+}
+
+.log-item-json {
+    margin-top: 5px;
+    margin-bottom: 0px;
+}
+
+.hljs {
+    overflow-x: inherit;
+}

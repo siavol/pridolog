@@ -1,11 +1,14 @@
 'use strict';
 
 import * as path from 'path';
+import { GidDocumentContentProvider, encodeGid } from './gidDocumentContentProvider';
 
 import {
 	workspace, window,
 	ExtensionContext, commands, TextEditor, TextEditorEdit, 
-	Selection } from 'vscode';
+	Selection, 
+	Disposable,
+	Uri} from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
 
 export function activate(context: ExtensionContext) {
@@ -47,9 +50,9 @@ export function activate(context: ExtensionContext) {
 	//
 	// Commands
 	//
-	let opDurationCommand = commands.registerTextEditorCommand('pridolog.operationDuration',
+	const opDurationCommand = commands.registerTextEditorCommand('pridolog.operationDuration',
 		(textEditor: TextEditor) => {
-			commands.executeCommand('pridolog.serverGetOperationDuration', 
+			commands.executeCommand('pridolog.server.getOperationDuration', 
 				textEditor.document.uri.toString(), textEditor.selection.active.line)
 				.then((result: any) => {
 					if (result) {
@@ -61,11 +64,58 @@ export function activate(context: ExtensionContext) {
 		});
 	context.subscriptions.push(opDurationCommand);
 
-	let revealLineCommand = commands.registerTextEditorCommand('pridolog.revealLine', 
-		(textEditor: TextEditor, _edit: TextEditorEdit, arg: { lineNumber: number }) => {
-			let range = textEditor.document.lineAt(arg.lineNumber).range;
-			textEditor.selection = new Selection(range.start, range.end);
-			textEditor.revealRange(range);
+	const showGidDocumentCommand = commands.registerCommand('pridolog.showGidDocument',
+		() => {
+			let gidValue = null;
+			if (window.activeTextEditor 
+				&& window.activeTextEditor.document.languageId === 'prizmdoc-log') {
+				const lineNo = window.activeTextEditor.selection.active.line;
+				const line = window.activeTextEditor.document.lineAt(lineNo);
+				try {
+					gidValue = JSON.parse(line.text).gid;
+				} catch {}
+			}
+			window.showInputBox({
+				prompt: 'Enter the gid for which the document will be generated',
+				placeHolder: 'gid',
+				value: gidValue
+			}).then(
+				gid => {
+					if (gid)
+						commands.executeCommand('vscode.previewHtml', 
+							encodeGid(gid), undefined, `gid: ${gid}`);
+				},
+				error => {
+					window.showErrorMessage(error);
+				}
+			);
+		});
+	context.subscriptions.push(showGidDocumentCommand);
+
+	const revealLineCommand = commands.registerTextEditorCommand('pridolog.revealLine', 
+		(textEditor: TextEditor, 
+			_edit: TextEditorEdit, 
+			arg: { lineNumber: number }) => {
+				const range = textEditor.document.lineAt(arg.lineNumber).range;
+				textEditor.selection = new Selection(range.start, range.end);
+				textEditor.revealRange(range);
 	});
 	context.subscriptions.push(revealLineCommand);
+
+	commands.registerCommand('pridolog.open',(arg: {uri: string, line: number}) => {
+		window.showTextDocument(Uri.parse(arg.uri)).then(textEditor => {
+			const range = textEditor.document.lineAt(arg.line).range;
+			textEditor.selection = new Selection(range.start, range.end);
+			textEditor.revealRange(range);
+		});
+	});
+
+	//
+	// Document Conten Provider
+	//
+	const gidDocumentProvider = new GidDocumentContentProvider();
+	const contentProviderRegistration = Disposable.from(
+		workspace.registerTextDocumentContentProvider(GidDocumentContentProvider.scheme, gidDocumentProvider)
+	);
+	context.subscriptions.push(contentProviderRegistration);
 }

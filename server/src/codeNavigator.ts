@@ -33,15 +33,18 @@ export class CodeNavigator {
         }
     }
 
-    public findAllEntriesForGid(gid: string): Location[] {
+    public findAllLogLinesForGid(gid: string): (ILogLine & { uri: string })[] {
         const logFiles = this.documentsProvider.getDocuments();
-        let result = _(logFiles)
+        return _(logFiles)
             .map(file => ({ uri: file, lines: this.getLogLines(file) }))
-            .flatMap(file => file.lines.map(line => ({uri: file.uri, text:line.source, line: line.line, logItem:line.logItem})))
+            .flatMap(file => file.lines.map(line => ({ uri: file.uri, source: line.source, line: line.line, logItem: line.logItem })))
             .filter(item => item.logItem.gid === gid)
-            .map(item => ({ uri: item.uri, range: Range.create(item.line, 0, item.line, item.text.length-1) }))
             .value();
-        return result;
+    }
+
+    public findAllEntryLocationsForGid(gid: string): Location[] {
+        return this.findAllLogLinesForGid(gid)
+            .map(item => ({ uri: item.uri, range: Range.create(item.line, 0, item.line, item.source.length-1) }));
     }
 
     public getDefinition(reqLogItem: any): Location {

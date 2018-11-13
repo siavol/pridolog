@@ -10,12 +10,14 @@
 		"url": "https://github.com/Microsoft/vscode-extension-samples"
 	},
 	"scripts": {
-		"postinstall": "cd server && npm install && cd ../client && npm install && cd ..",
-		"compile": "tsc -p client/tsconfig.json && cd server && npm run installServer && cd .. && tsc -p server/tsconfig.json",
+		"postinstall": "cd server && npm install && cd ../client && npm install && cd .. && cd browser && npm install && cd ..",
+		"compile": "tsc -p client/tsconfig.json && cd server && npm run installServer && cd .. && tsc -p server/tsconfig.json && cd browser && npm run build && cd ..",
 		"compile:client": "tsc -p client/tsconfig.json",
 		"watch:client": "tsc -w -p client/tsconfig.json",
 		"compile:server": "cd server && npm run installServer && cd .. && tsc -p server/tsconfig.json",
 		"watch:server": "cd server && npm run installServer && cd .. && tsc -w -p server/tsconfig.json",
+		"compile:browser": "cd browser && npm run build && cd ..",
+		"watch:browser": "echo not implemented",
 		"test:unit": "mocha client/server/test",
 		"package": "cd client && vsce package && cd .."
 	},

@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,		
+		"target": "es6",
+		"module": "es6",
+		"moduleResolution": "node",
+		"rootDir": ".",
+		"outDir": "../client/browser",
+		"lib": [ "es6", "dom" ],
+		"sourceMap": true,
+		"jsx": "react"
+	},
+	"exclude": [
+		"node_modules",
+		"server",
+		"browser"
+	]
+}

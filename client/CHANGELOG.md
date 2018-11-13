@@ -1,5 +1,6 @@
 # Version 0.0.4
 - Added "Show operation duration" command
+- Added virtual document with gid report. Use "Show log entries for the gid" command to generate it.
 
 # Version 0.0.3
 - Improve PCCIS support

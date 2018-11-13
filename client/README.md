@@ -32,3 +32,8 @@ Use *Go to Definition* and *Peek Definition* commands to navigate thru request l
 ### Find gid references
 Use *Find All References* command to find all log entries for the gid:
 ![Find All References](https://git.jpg.com/ishestakov/pridolog/raw/master/tutorial-gifs/find_all_references.gif)
+
+### Gid document
+Use *Show log entries for the gid* command to show all log entries for the gid in a separate document. It shows all log items for some specific gid in chronological order, 
+allows navigation and viewing log items in tree view.
+![Show log entries for the gid](https://git.jpg.com/ishestakov/pridolog/raw/master/tutorial-gifs/gid_document.gif)

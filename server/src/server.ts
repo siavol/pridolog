@@ -51,7 +51,10 @@ connection.onInitialize((params): InitializeResult => {
 				resolveProvider: true
 			},
 			executeCommandProvider: {
-				commands: [ 'pridolog.serverGetOperationDuration' ]
+				commands: [ 
+					'pridolog.server.getOperationDuration',
+					'pridolog.server.getLogItemsForGid'
+				]
 			}
 		}
 	}
@@ -147,7 +150,7 @@ function getLogItem(textPosition: TextDocumentPositionParams): any {
 
 connection.onReferences((params: ReferenceParams): Location[] => {
 	const logItem = getLogItem(params);
-	return codeNavigator.findAllEntriesForGid(logItem.gid);
+	return codeNavigator.findAllEntryLocationsForGid(logItem.gid);
 });
 
 connection.onDefinition((params: TextDocumentPositionParams): Location => {
@@ -211,13 +214,19 @@ connection.onCodeLensResolve((lens: CodeLens): CodeLens => {
 connection.onExecuteCommand((params: ExecuteCommandParams): any => {
 	connection.console.log(JSON.stringify(params));
 	switch (params.command) {
-		case 'pridolog.serverGetOperationDuration':
+		case 'pridolog.server.getOperationDuration':
 			const documentUri = params.arguments[0];
 			const lineNumber = params.arguments[1];
 			const duration = codeNavigator.getOperationDuration(documentUri, lineNumber);
 			return duration 
 				? { durationMs: duration.durationMs, durationFormatted: durationFormat(duration.durationMs) } 
 				: null;
+		case 'pridolog.server.getLogItemsForGid':
+			const gid = params.arguments[0];
+			return _(codeNavigator.findAllLogLinesForGid(gid))
+				.sort(line => Date.parse(line.logItem.time))
+				.map(line => _.pick(line, 'uri', 'line', 'logItem'))
+				.value();
 		default:
 			return undefined;
 	}
