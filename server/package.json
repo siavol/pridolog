@@ -9,7 +9,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-extension-samples"
+		"url": "https://git.jpg.com/ishestakov/pridolog"
 	},
 	"dependencies": {
 		"file-uri-to-path": "^1.0.0",
