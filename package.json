@@ -7,7 +7,7 @@
 	"publisher": "ishestakov",
 	"repository": {
 		"type": "git",
-		"url": "https://git.jpg.com/ishestakov/pridolog"
+		"url": "https://github.com/siavol/pridolog.git"
 	},
 	"scripts": {
 		"postinstall": "cd server && npm install && cd ../client && npm install && cd .. && cd browser && npm install && cd ..",
