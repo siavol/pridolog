@@ -1,6 +1,6 @@
 {
   "name": "pridolog",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "PrizmDoc log html documents.",
   "main": "index.js",
   "scripts": {

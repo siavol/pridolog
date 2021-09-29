@@ -1,7 +1,7 @@
 {
 	"name": "pridolog",
 	"description": "Implementation of a PrizmDoc log language server.",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"author": "Ilya Shestakov",
 	"license": "MIT",
 	"engines": {
