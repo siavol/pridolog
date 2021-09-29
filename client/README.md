@@ -12,7 +12,7 @@
 ### Problems
 
 Shows first 250 (VS Code hardcoded limit) errors and warnings in the log file.
-![Problems](../tutorial-gifs/problems.gif)
+![Problems](./tutorial-gifs/problems.gif)
 
 ### CodeLens
 
@@ -23,17 +23,17 @@ pridolog highlights all tasks for you. You can click on task CodeLens to navigat
 pridolog finds all long operations. You can control it with settings
 - *pridolog.showLongOperations.enabled*
 - *pridolog.showLongOperations.durationInMs*
-![CodeLens](../tutorial-gifs/code-lens-tasks.png)
+![CodeLens](./tutorial-gifs/code-lens-tasks.png)
 
 ### Requests navigation
 Use *Go to Definition* and *Peek Definition* commands to navigate thru request log entries:
-![Go to Definition](../tutorial-gifs/go_to_definition.gif)
+![Go to Definition](./tutorial-gifs/go_to_definition.gif)
 
 ### Find gid references
 Use *Find All References* command to find all log entries for the gid:
-![Find All References](../tutorial-gifs/find_all_references.gif)
+![Find All References](./tutorial-gifs/find_all_references.gif)
 
 ### Gid document
 Use *Show log entries for the gid* command to show all log entries for the gid in a separate document. It shows all log items for some specific gid in chronological order, 
 allows navigation and viewing log items in tree view.
-![Show log entries for the gid](../tutorial-gifs/gid_document.gif)
+![Show log entries for the gid](./tutorial-gifs/gid_document.gif)
