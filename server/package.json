@@ -9,7 +9,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://git.jpg.com/ishestakov/pridolog"
+		"url": "https://github.com/siavol/pridolog.git"
 	},
 	"dependencies": {
 		"file-uri-to-path": "^1.0.0",
